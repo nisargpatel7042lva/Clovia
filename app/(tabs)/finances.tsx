@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/Colors';
+import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
 import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -13,6 +14,14 @@ const WALLET_ID = '7f8a...b3c2';
 
 export default function FinancesScreen() {
   const [copied, setCopied] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
+
+  const APP_IDENTITY = {
+    name: 'Clovia',
+    uri: 'https://clovia.app', // Update to your app's URI
+    icon: 'icon.png', // Path relative to the URI
+  };
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(WALLET_ID);
@@ -21,8 +30,49 @@ export default function FinancesScreen() {
     Alert.alert('Copied!', 'Wallet ID copied to clipboard.');
   };
 
+  const handleConnectWallet = async () => {
+    setConnecting(true);
+    try {
+      const result = await transact(async (wallet) => {
+        const auth = await wallet.authorize({
+          chain: 'solana:devnet', // or 'solana:mainnet', 'mainnet-beta', etc.
+          identity: APP_IDENTITY,
+        });
+        return auth;
+      });
+      setWalletAddress(result.accounts[0].address);
+      Alert.alert('Wallet Connected', `Address: ${result.accounts[0].address}`);
+    } catch (e) {
+      Alert.alert('Connection Failed', e instanceof Error ? e.message : String(e));
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
+      {/* Wallet Connect Button */}
+      <TouchableOpacity
+        style={{
+          backgroundColor: Colors.dark.tint,
+          borderRadius: 12,
+          padding: 14,
+          alignItems: 'center',
+          marginBottom: 18,
+          opacity: connecting ? 0.7 : 1,
+        }}
+        onPress={handleConnectWallet}
+        disabled={!!walletAddress || connecting}
+      >
+        <Text style={{ color: Colors.dark.background, fontWeight: 'bold', fontSize: 16 }}>
+          {walletAddress ? 'Wallet Connected' : connecting ? 'Connecting...' : 'Connect Wallet'}
+        </Text>
+        {walletAddress && (
+          <Text style={{ color: Colors.dark.background, fontSize: 13, marginTop: 4 }} numberOfLines={1}>
+            {walletAddress}
+          </Text>
+        )}
+      </TouchableOpacity>
       {/* Wallet ID Section */}
       <View style={styles.walletIdRow}>
         <Text style={styles.walletIdLabel}>Wallet ID:</Text>

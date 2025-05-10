@@ -1,11 +1,13 @@
 import { Colors } from '@/constants/Colors';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function PostScreen() {
   const [text, setText] = useState('');
   const [image, setImage] = useState<string | null>(null);
+  const router = useRouter();
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -46,6 +48,13 @@ export default function PostScreen() {
           <Text style={styles.buttonText}>Post</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity
+        style={styles.memeButton}
+        onPress={() => router.push('/meme-generator')}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.memeButtonText}>Create Meme</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -114,5 +123,24 @@ const styles = StyleSheet.create({
     color: Colors.dark.background,
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  memeButton: {
+    marginTop: 24,
+    backgroundColor: '#a4508b',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    width: '90%',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  memeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+    letterSpacing: 1.1,
   },
 }); 

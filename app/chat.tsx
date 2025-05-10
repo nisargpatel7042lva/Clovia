@@ -39,7 +39,7 @@ export default function ChatScreen() {
         contentContainerStyle={{ padding: 18, paddingBottom: 80 }}
         renderItem={({ item }) => (
           <View style={[styles.messageBubble, item.fromMe ? styles.bubbleMe : styles.bubbleOther]}>
-            <Text style={styles.messageText}>{item.text}</Text>
+            <Text style={[styles.messageText, !item.fromMe && { color: '#fff' }]}>{item.text}</Text>
           </View>
         )}
       />
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   bubbleOther: {
-    backgroundColor: '#23243a',
+    backgroundColor: '#aba0f1',
     alignSelf: 'flex-start',
   },
   messageText: {
@@ -117,6 +117,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    paddingBottom: 40,
   },
   input: {
     flex: 1,

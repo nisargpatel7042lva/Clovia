@@ -1,6 +1,8 @@
 import { Colors } from '@/constants/Colors';
 import { useNavigation } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -176,9 +178,12 @@ export default function FeedScreen() {
   const [selectedShare, setSelectedShare] = useState<string[]>([]);
   const [storyModal, setStoryModal] = useState<{ visible: boolean; storyIndex: number | null }>({ visible: false, storyIndex: null });
   const [storyPostModal, setStoryPostModal] = useState(false);
+  const [storyImage, setStoryImage] = useState<string | null>(null);
+  const [storyCaption, setStoryCaption] = useState('');
   const router = useRouter();
   const feedListRef = useRef<FlatList>(null);
   const navigation = useNavigation();
+  const params = useLocalSearchParams();
 
   const handleDoubleTap = (index: number) => {
     Animated.sequence([
@@ -218,6 +223,19 @@ export default function FeedScreen() {
     setSelectedShare([]);
   };
 
+  const handleYourStory = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [9, 16],
+      quality: 1,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setStoryImage(result.assets[0].uri);
+      setStoryPostModal(true);
+    }
+  };
+
   const renderItem = ({ item, index }: { item: Post; index: number }) => {
     const onImagePress = () => {
       const now = Date.now();
@@ -233,7 +251,16 @@ export default function FeedScreen() {
           <Text style={styles.user}>{item.user}</Text>
         </View>
         <TouchableOpacity activeOpacity={0.8} onPress={onImagePress} style={{ position: 'relative' }}>
-          <Image source={{ uri: item.image }} style={styles.image} />
+          <Image
+            source={{ uri: item.image }}
+            style={styles.image}
+            onError={e => {
+              e.currentTarget.setNativeProps({
+                src: [{ uri: 'https://via.placeholder.com/400x300?text=No+Image' }]
+              });
+              console.warn('Image failed to load:', item.image);
+            }}
+          />
           <Animated.View style={[styles.heartOverlay, { opacity: likeAnims[index], transform: [{ scale: likeAnims[index].interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }] }>
             <Ionicons name="heart" size={90} color="#ff3b5c" />
           </Animated.View>
@@ -284,8 +311,44 @@ export default function FeedScreen() {
     setPosts(shuffleArray(postsData));
   }, []);
 
+  // Add meme to feed if coming from meme-generator
+  useEffect(() => {
+    if (params.newMeme && typeof params.newMeme === 'string') {
+      const meme = JSON.parse(params.newMeme);
+      setPosts(prev => [
+        {
+          id: `meme-${Date.now()}`,
+          user: 'you',
+          avatar: 'https://randomuser.me/api/portraits/men/99.jpg',
+          image: meme.image,
+          text: meme.topText + (meme.bottomText ? ('\n' + meme.bottomText) : ''),
+          likes: 0,
+          comments: [],
+        },
+        ...prev,
+      ]);
+      setLikeAnims(prev => [new Animated.Value(0), ...prev]);
+      setLiked(prev => [false, ...prev]);
+    }
+  }, [params.newMeme]);
+
+  const renderAppName = () => (
+    <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 2 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+        <Image source={require('../../assets/images/icon.png')} style={{ width: 36, height: 36, borderRadius: 8, marginRight: 10 }} />
+        <Text style={{ color: Colors.dark.tint, fontSize: 22, fontWeight: '600', letterSpacing: 1.2, fontFamily: 'cursive' }}>Clovia</Text>
+      </View>
+    </View>
+  );
+
   const renderStories = () => (
     <View style={styles.storiesContainer}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, marginRight: 8 }}>
+        <View />
+        <TouchableOpacity style={{ padding: 6 }} onPress={() => router.push('/messages')}>
+          <Ionicons name="paper-plane-outline" size={28} color={Colors.dark.tint} />
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={demoStories}
         keyExtractor={item => item.id}
@@ -293,9 +356,16 @@ export default function FeedScreen() {
         showsHorizontalScrollIndicator={false}
         renderItem={({ item, index }) => (
           item.isMe ? (
-            <TouchableOpacity style={styles.storyItem} onPress={() => setStoryPostModal(true)}>
+            <TouchableOpacity style={styles.storyItem} onPress={handleYourStory}>
               <View style={styles.myStoryBubble}>
-                <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
+                <LinearGradient
+                  colors={["#a4508b", "#5f0a87", "#e0c3fc"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.storyGradientRing}
+                >
+                  <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
+                </LinearGradient>
                 <View style={styles.plusBubble}>
                   <Ionicons name="add" size={18} color={Colors.dark.tint} />
                 </View>
@@ -304,7 +374,14 @@ export default function FeedScreen() {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.storyItem} onPress={() => setStoryModal({ visible: true, storyIndex: index })}>
-              <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
+              <LinearGradient
+                colors={["#a4508b", "#5f0a87", "#e0c3fc"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.storyGradientRing}
+              >
+                <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
+              </LinearGradient>
               <Text style={styles.storyUser}>{item.user}</Text>
             </TouchableOpacity>
           )
@@ -315,29 +392,43 @@ export default function FeedScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Image source={require('../../assets/images/icon.png')} style={styles.appIcon} />
-        <Text style={styles.headerTitle}>Clovia</Text>
-        <TouchableOpacity style={styles.messageIcon} onPress={() => router.push('/(tabs)/messages')}>
-          <Ionicons name="paper-plane-outline" size={28} color={Colors.dark.tint} />
-        </TouchableOpacity>
-      </View>
       <FlatList
         ref={feedListRef}
         data={posts}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
-        ListHeaderComponent={renderStories}
+        ListHeaderComponent={() => (
+          <>
+            {renderAppName()}
+            {renderStories()}
+          </>
+        )}
         ListFooterComponent={<View style={{ height: 40 }} />}
       />
-      {/* Story Post Modal (demo) */}
-      <Modal visible={storyPostModal} transparent animationType="fade" onRequestClose={() => setStoryPostModal(false)}>
-        <Pressable style={styles.storyModalOverlay} onPress={() => setStoryPostModal(false)}>
-          <View style={styles.storyModalContent}>
-            <Text style={{ color: '#fff', fontSize: 18, marginBottom: 20 }}>Post a Story (Demo)</Text>
-            <Ionicons name="add-circle" size={60} color={Colors.dark.tint} />
-            <Text style={{ color: '#fff', marginTop: 20 }}>Feature coming soon!</Text>
+      {/* Story Post Modal (Instagram-like UI) */}
+      <Modal visible={storyPostModal && !!storyImage} transparent animationType="fade" onRequestClose={() => { setStoryPostModal(false); setStoryImage(null); setStoryCaption(''); }}>
+        <Pressable style={styles.storyModalOverlay} onPress={() => { setStoryPostModal(false); setStoryImage(null); setStoryCaption(''); }}>
+          <View style={[styles.storyModalContent, { backgroundColor: '#18192b', borderRadius: 18, padding: 0, overflow: 'hidden' }]}> 
+            {storyImage && (
+              <Image source={{ uri: storyImage }} style={{ width: '100%', height: 400, resizeMode: 'cover' }} />
+            )}
+            <View style={{ padding: 16, width: '100%' }}>
+              <TextInput
+                style={{ color: '#fff', fontSize: 18, backgroundColor: '#23243a', borderRadius: 10, padding: 10, marginBottom: 12 }}
+                placeholder="Add a caption..."
+                placeholderTextColor="#aaa"
+                value={storyCaption}
+                onChangeText={setStoryCaption}
+                maxLength={100}
+              />
+              <TouchableOpacity
+                style={{ backgroundColor: Colors.dark.tint, borderRadius: 10, padding: 14, alignItems: 'center' }}
+                onPress={() => { setStoryPostModal(false); setStoryImage(null); setStoryCaption(''); alert('Story shared! (Demo)'); }}
+              >
+                <Text style={{ color: Colors.dark.background, fontWeight: 'bold', fontSize: 16 }}>Share to Story</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </Pressable>
       </Modal>
@@ -436,31 +527,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.background,
     padding: 0,
     paddingTop: 24,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 40,
-    paddingBottom: 16,
-    backgroundColor: Colors.dark.background,
-  },
-  appIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  headerTitle: {
-    color: Colors.dark.tint,
-    fontSize: 24,
-    fontWeight: 'bold',
-    letterSpacing: 1.2,
-  },
-  messageIcon: {
-    position: 'absolute',
-    right: 24,
-    top: 40,
   },
   card: {
     backgroundColor: '#23243a',
@@ -658,8 +724,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    borderWidth: 2,
-    borderColor: '#ff3b5c',
     marginBottom: 4,
   },
   storyUser: {
@@ -701,5 +765,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: Colors.dark.background,
+  },
+  storyGradientRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
 }); 
