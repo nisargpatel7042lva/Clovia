@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/Colors';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Image, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Demo: import posts from feed
@@ -17,8 +18,8 @@ const posts = [
 ];
 
 export default function ProfileScreen() {
-  const [menuVisible, setMenuVisible] = useState(false);
   const stakedAmount = '3.7 SOL';
+  const router = useRouter();
 
   // Filter for user's posts (demo: user === 'you')
   const userPosts = demoFeedPosts.filter(p => p.user === 'you');
@@ -29,7 +30,7 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <View style={styles.topBar}>
         <View style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.menuIcon} onPress={() => setMenuVisible(true)}>
+        <TouchableOpacity style={styles.menuIcon} onPress={() => router.push('/settings')}>
           <Ionicons name="menu" size={32} color={Colors.dark.tint} />
         </TouchableOpacity>
       </View>
@@ -81,38 +82,6 @@ export default function ProfileScreen() {
           <Image source={{ uri: item.image }} style={styles.postImage} />
         )}
       />
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setMenuVisible(false)}>
-          <View style={styles.menuModal}>
-            <Text style={styles.menuTitle}>Menu</Text>
-            <TouchableOpacity style={styles.menuItem}>
-              <Ionicons name="settings-outline" size={22} color={Colors.dark.tint} style={styles.menuIconLeft} />
-              <Text style={styles.menuText}>Settings</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
-              <Ionicons name="person-outline" size={22} color={Colors.dark.tint} style={styles.menuIconLeft} />
-              <Text style={styles.menuText}>Profile</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
-              <Ionicons name="pulse-outline" size={22} color={Colors.dark.tint} style={styles.menuIconLeft} />
-              <Text style={styles.menuText}>Activity</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
-              <Ionicons name="wallet-outline" size={22} color={Colors.dark.tint} style={styles.menuIconLeft} />
-              <Text style={styles.menuText}>Wallet Details</Text>
-            </TouchableOpacity>
-            <View style={styles.financeTab}>
-              <Ionicons name="trending-up-outline" size={22} color={Colors.dark.tint} style={styles.menuIconLeft} />
-              <Text style={styles.menuText}>Staked: <Text style={{ color: Colors.dark.tint, fontWeight: 'bold' }}>{stakedAmount}</Text></Text>
-            </View>
-          </View>
-        </Pressable>
-      </Modal>
     </View>
   );
 }

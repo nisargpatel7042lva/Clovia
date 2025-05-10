@@ -296,7 +296,9 @@ export default function FeedScreen() {
             <TouchableOpacity style={styles.storyItem} onPress={() => setStoryPostModal(true)}>
               <View style={styles.myStoryBubble}>
                 <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
-                <View style={styles.plusBubble}><Ionicons name="add" size={22} color="#fff" /></View>
+                <View style={styles.plusBubble}>
+                  <Ionicons name="add" size={18} color={Colors.dark.tint} />
+                </View>
               </View>
               <Text style={styles.storyUser}>Your Story</Text>
             </TouchableOpacity>
@@ -691,10 +693,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: Colors.dark.tint,
+    backgroundColor: '#fff',
     borderRadius: 12,
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
