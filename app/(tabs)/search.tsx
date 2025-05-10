@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
     padding: 16,
+    paddingTop: 48,
   },
   input: {
     backgroundColor: '#23243a',

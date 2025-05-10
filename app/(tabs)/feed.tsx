@@ -1,8 +1,8 @@
 import { Colors } from '@/constants/Colors';
+import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { PanGestureHandler, PanGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const demoUsers = [
@@ -65,6 +65,78 @@ const postsData = [
     likes: 7,
     comments: [],
   },
+  // Additional demo posts for testing
+  {
+    id: '6',
+    user: 'frank',
+    avatar: 'https://randomuser.me/api/portraits/men/6.jpg',
+    image: 'https://images.unsplash.com/photo-1465101053361-7630c1c47054',
+    text: 'Crypto is the future!',
+    likes: 10,
+    comments: [
+      { id: 'c5', user: 'alice', text: 'Absolutely!' },
+    ],
+  },
+  {
+    id: '7',
+    user: 'grace',
+    avatar: 'https://randomuser.me/api/portraits/women/7.jpg',
+    image: 'https://images.unsplash.com/photo-1465101060172-cd5f2a6b1b6a',
+    text: 'Just finished a great book.',
+    likes: 6,
+    comments: [],
+  },
+  {
+    id: '8',
+    user: 'henry',
+    avatar: 'https://randomuser.me/api/portraits/men/8.jpg',
+    image: 'https://images.unsplash.com/photo-1465101071231-2eec1d8d1b1a',
+    text: 'Exploring new places.',
+    likes: 9,
+    comments: [
+      { id: 'c6', user: 'bob', text: 'Where is this?' },
+    ],
+  },
+  {
+    id: '9',
+    user: 'irene',
+    avatar: 'https://randomuser.me/api/portraits/women/9.jpg',
+    image: 'https://images.unsplash.com/photo-1465101082342-2eec1d8d1b1a',
+    text: 'Coffee time!',
+    likes: 4,
+    comments: [],
+  },
+  {
+    id: '10',
+    user: 'jack',
+    avatar: 'https://randomuser.me/api/portraits/men/10.jpg',
+    image: 'https://images.unsplash.com/photo-1465101093453-2eec1d8d1b1a',
+    text: 'Working on a new project.',
+    likes: 11,
+    comments: [
+      { id: 'c7', user: 'carol', text: 'Good luck!' },
+    ],
+  },
+  {
+    id: '11',
+    user: 'kate',
+    avatar: 'https://randomuser.me/api/portraits/women/11.jpg',
+    image: 'https://images.unsplash.com/photo-1465101104564-2eec1d8d1b1a',
+    text: 'Sunshine and smiles.',
+    likes: 13,
+    comments: [],
+  },
+  {
+    id: '12',
+    user: 'leo',
+    avatar: 'https://randomuser.me/api/portraits/men/12.jpg',
+    image: 'https://images.unsplash.com/photo-1465101115675-2eec1d8d1b1a',
+    text: 'Blockchain rocks!',
+    likes: 15,
+    comments: [
+      { id: 'c8', user: 'frank', text: 'Preach!' },
+    ],
+  },
 ];
 
 type Post = typeof postsData[number];
@@ -74,6 +146,7 @@ type Comment = { id: string; user: string; text: string };
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const demoStories = [
+  { id: 'me', user: 'You', avatar: 'https://randomuser.me/api/portraits/men/99.jpg', image: '', isMe: true },
   { id: 's1', user: 'alice', avatar: 'https://randomuser.me/api/portraits/women/1.jpg', image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb' },
   { id: 's2', user: 'bob', avatar: 'https://randomuser.me/api/portraits/men/2.jpg', image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca' },
   { id: 's3', user: 'carol', avatar: 'https://randomuser.me/api/portraits/women/3.jpg', image: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308' },
@@ -81,8 +154,18 @@ const demoStories = [
   { id: 's5', user: 'eve', avatar: 'https://randomuser.me/api/portraits/women/5.jpg', image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99' },
 ];
 
+// Fisher-Yates shuffle
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export default function FeedScreen() {
-  const [posts, setPosts] = useState(postsData);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [likeAnims, setLikeAnims] = useState(postsData.map(() => new Animated.Value(0)));
   const [liked, setLiked] = useState(postsData.map(() => false));
   const lastTaps = useRef<(number | null)[]>(postsData.map(() => null));
@@ -92,8 +175,10 @@ export default function FeedScreen() {
   const [newComment, setNewComment] = useState('');
   const [selectedShare, setSelectedShare] = useState<string[]>([]);
   const [storyModal, setStoryModal] = useState<{ visible: boolean; storyIndex: number | null }>({ visible: false, storyIndex: null });
+  const [storyPostModal, setStoryPostModal] = useState(false);
   const router = useRouter();
-  const panRef = useRef(null);
+  const feedListRef = useRef<FlatList>(null);
+  const navigation = useNavigation();
 
   const handleDoubleTap = (index: number) => {
     Animated.sequence([
@@ -185,131 +270,161 @@ export default function FeedScreen() {
     { id: 'group1', name: 'Crypto Group', last: 'New event soon!' },
   ];
 
-  const handleGesture = (event: PanGestureHandlerGestureEvent) => {
-    if (event.nativeEvent.translationX < -80 && event.nativeEvent.state === State.END) {
-      router.push('/(tabs)/messages');
-    }
-  };
+  useEffect(() => {
+    // @ts-ignore: 'tabPress' is a valid event for tab navigation
+    const unsubscribe = (navigation as any).addListener('tabPress', () => {
+      if (feedListRef.current) {
+        feedListRef.current.scrollToOffset({ offset: 0, animated: true });
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+    setPosts(shuffleArray(postsData));
+  }, []);
+
+  const renderStories = () => (
+    <View style={styles.storiesContainer}>
+      <FlatList
+        data={demoStories}
+        keyExtractor={item => item.id}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        renderItem={({ item, index }) => (
+          item.isMe ? (
+            <TouchableOpacity style={styles.storyItem} onPress={() => setStoryPostModal(true)}>
+              <View style={styles.myStoryBubble}>
+                <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
+                <View style={styles.plusBubble}><Ionicons name="add" size={22} color="#fff" /></View>
+              </View>
+              <Text style={styles.storyUser}>Your Story</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.storyItem} onPress={() => setStoryModal({ visible: true, storyIndex: index })}>
+              <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
+              <Text style={styles.storyUser}>{item.user}</Text>
+            </TouchableOpacity>
+          )
+        )}
+      />
+    </View>
+  );
 
   return (
-    <PanGestureHandler ref={panRef} onHandlerStateChange={handleGesture}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Image source={require('../../assets/images/icon.png')} style={styles.appIcon} />
-          <Text style={styles.headerTitle}>Clovia</Text>
-          <TouchableOpacity style={styles.messageIcon} onPress={() => router.push('/(tabs)/messages')}>
-            <Ionicons name="paper-plane-outline" size={28} color={Colors.dark.tint} />
-          </TouchableOpacity>
-        </View>
-        {/* Stories Section */}
-        <View style={styles.storiesContainer}>
-          <FlatList
-            data={demoStories}
-            keyExtractor={item => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item, index }) => (
-              <TouchableOpacity style={styles.storyItem} onPress={() => setStoryModal({ visible: true, storyIndex: index })}>
-                <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
-                <Text style={styles.storyUser}>{item.user}</Text>
-              </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Image source={require('../../assets/images/icon.png')} style={styles.appIcon} />
+        <Text style={styles.headerTitle}>Clovia</Text>
+        <TouchableOpacity style={styles.messageIcon} onPress={() => router.push('/(tabs)/messages')}>
+          <Ionicons name="paper-plane-outline" size={28} color={Colors.dark.tint} />
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        ref={feedListRef}
+        data={posts}
+        keyExtractor={item => item.id}
+        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
+        ListHeaderComponent={renderStories}
+        ListFooterComponent={<View style={{ height: 40 }} />}
+      />
+      {/* Story Post Modal (demo) */}
+      <Modal visible={storyPostModal} transparent animationType="fade" onRequestClose={() => setStoryPostModal(false)}>
+        <Pressable style={styles.storyModalOverlay} onPress={() => setStoryPostModal(false)}>
+          <View style={styles.storyModalContent}>
+            <Text style={{ color: '#fff', fontSize: 18, marginBottom: 20 }}>Post a Story (Demo)</Text>
+            <Ionicons name="add-circle" size={60} color={Colors.dark.tint} />
+            <Text style={{ color: '#fff', marginTop: 20 }}>Feature coming soon!</Text>
+          </View>
+        </Pressable>
+      </Modal>
+      {/* Story Modal */}
+      <Modal visible={storyModal.visible} transparent animationType="fade" onRequestClose={() => setStoryModal({ visible: false, storyIndex: null })}>
+        <Pressable style={styles.storyModalOverlay} onPress={() => setStoryModal({ visible: false, storyIndex: null })}>
+          <View style={styles.storyModalContent}>
+            {storyModal.storyIndex !== null && (
+              <Image source={{ uri: demoStories[storyModal.storyIndex].image }} style={styles.storyImage} />
             )}
-          />
-        </View>
-        {/* End Stories Section */}
-        <FlatList
-          data={posts}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          renderItem={renderItem}
-        />
-        {/* Story Modal */}
-        <Modal visible={storyModal.visible} transparent animationType="fade" onRequestClose={() => setStoryModal({ visible: false, storyIndex: null })}>
-          <Pressable style={styles.storyModalOverlay} onPress={() => setStoryModal({ visible: false, storyIndex: null })}>
-            <View style={styles.storyModalContent}>
-              {storyModal.storyIndex !== null && (
-                <Image source={{ uri: demoStories[storyModal.storyIndex].image }} style={styles.storyImage} />
-              )}
-            </View>
-          </Pressable>
-        </Modal>
-        {/* Comments Modal */}
-        <Modal visible={commentModal.visible} transparent animationType="slide" onRequestClose={() => setCommentModal({ visible: false, postIndex: null })}>
-          <Pressable style={styles.modalOverlay} onPress={() => setCommentModal({ visible: false, postIndex: null })}>
-            <View style={styles.commentModal}>
-              <Text style={styles.modalTitle}>Comments</Text>
-              <View style={{ flex: 1 }}>
-                <FlatList
-                  data={commentModal.postIndex !== null ? posts[commentModal.postIndex].comments : []}
-                  keyExtractor={c => c.id}
-                  renderItem={({ item }) => (
-                    <Text style={styles.commentText}><Text style={{ color: Colors.dark.tint }}>{item.user}:</Text> {item.text}</Text>
-                  )}
-                  ListEmptyComponent={<Text style={{ color: Colors.dark.icon, textAlign: 'center', marginTop: 20 }}>No comments yet.</Text>}
-                />
-              </View>
-              <View style={styles.commentInputRow}>
-                <TextInput
-                  style={styles.commentInput}
-                  placeholder="Add a comment..."
-                  placeholderTextColor={Colors.dark.icon}
-                  value={newComment}
-                  onChangeText={setNewComment}
-                />
-                <TouchableOpacity onPress={handleAddComment} style={styles.sendButton}>
-                  <Ionicons name="send" size={22} color={Colors.dark.tint} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Pressable>
-        </Modal>
-        {/* Share Modal */}
-        <Modal visible={shareModal.visible} transparent animationType="slide" onRequestClose={() => setShareModal({ visible: false, postIndex: null })}>
-          <Pressable style={styles.modalOverlay} onPress={() => setShareModal({ visible: false, postIndex: null })}>
-            <View style={styles.shareModal}>
-              <Text style={styles.modalTitle}>Share to...</Text>
+          </View>
+        </Pressable>
+      </Modal>
+      {/* Comments Modal */}
+      <Modal visible={commentModal.visible} transparent animationType="slide" onRequestClose={() => setCommentModal({ visible: false, postIndex: null })}>
+        <Pressable style={styles.modalOverlay} onPress={() => setCommentModal({ visible: false, postIndex: null })}>
+          <View style={styles.commentModal}>
+            <Text style={styles.modalTitle}>Comments</Text>
+            <View style={{ flex: 1 }}>
               <FlatList
-                data={demoUsers}
-                keyExtractor={u => u.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[styles.shareUser, selectedShare.includes(item.id) && { backgroundColor: Colors.dark.icon }]}
-                    onPress={() => setSelectedShare((prev) => prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id])}
-                  >
-                    <Text style={styles.shareUserText}>{item.name}</Text>
-                    {selectedShare.includes(item.id) && <Ionicons name="checkmark-circle" size={22} color={Colors.dark.tint} />}
-                  </TouchableOpacity>
-                )}
-              />
-              <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-                <Text style={styles.shareButtonText}>Share</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Modal>
-        {/* Messages Modal */}
-        <Modal visible={messageModal} transparent animationType="slide" onRequestClose={() => setMessageModal(false)}>
-          <Pressable style={styles.modalOverlay} onPress={() => setMessageModal(false)}>
-            <View style={styles.messagesModal}>
-              <Text style={styles.modalTitle}>Messages</Text>
-              <FlatList
-                data={demoChats}
+                data={commentModal.postIndex !== null ? posts[commentModal.postIndex].comments : []}
                 keyExtractor={c => c.id}
                 renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.chatItem}>
-                    <Ionicons name={item.id.startsWith('group') ? 'people-outline' : 'person-outline'} size={26} color={Colors.dark.tint} style={{ marginRight: 10 }} />
-                    <View>
-                      <Text style={styles.chatName}>{item.name}</Text>
-                      <Text style={styles.chatLast}>{item.last}</Text>
-                    </View>
-                  </TouchableOpacity>
+                  <Text style={styles.commentText}><Text style={{ color: Colors.dark.tint }}>{item.user}:</Text> {item.text}</Text>
                 )}
+                ListEmptyComponent={<Text style={{ color: Colors.dark.icon, textAlign: 'center', marginTop: 20 }}>No comments yet.</Text>}
               />
             </View>
-          </Pressable>
-        </Modal>
-      </View>
-    </PanGestureHandler>
+            <View style={styles.commentInputRow}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Add a comment..."
+                placeholderTextColor={Colors.dark.icon}
+                value={newComment}
+                onChangeText={setNewComment}
+              />
+              <TouchableOpacity onPress={handleAddComment} style={styles.sendButton}>
+                <Ionicons name="send" size={22} color={Colors.dark.tint} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+      {/* Share Modal */}
+      <Modal visible={shareModal.visible} transparent animationType="slide" onRequestClose={() => setShareModal({ visible: false, postIndex: null })}>
+        <Pressable style={styles.modalOverlay} onPress={() => setShareModal({ visible: false, postIndex: null })}>
+          <View style={styles.shareModal}>
+            <Text style={styles.modalTitle}>Share to...</Text>
+            <FlatList
+              data={demoUsers}
+              keyExtractor={u => u.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.shareUser, selectedShare.includes(item.id) && { backgroundColor: Colors.dark.icon }]}
+                  onPress={() => setSelectedShare((prev) => prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id])}
+                >
+                  <Text style={styles.shareUserText}>{item.name}</Text>
+                  {selectedShare.includes(item.id) && <Ionicons name="checkmark-circle" size={22} color={Colors.dark.tint} />}
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+              <Text style={styles.shareButtonText}>Share</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+      {/* Messages Modal */}
+      <Modal visible={messageModal} transparent animationType="slide" onRequestClose={() => setMessageModal(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setMessageModal(false)}>
+          <View style={styles.messagesModal}>
+            <Text style={styles.modalTitle}>Messages</Text>
+            <FlatList
+              data={demoChats}
+              keyExtractor={c => c.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.chatItem}>
+                  <Ionicons name={item.id.startsWith('group') ? 'people-outline' : 'person-outline'} size={26} color={Colors.dark.tint} style={{ marginRight: 10 }} />
+                  <View>
+                    <Text style={styles.chatName}>{item.name}</Text>
+                    <Text style={styles.chatLast}>{item.last}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </Pressable>
+      </Modal>
+    </View>
   );
 }
 
@@ -318,6 +433,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
     padding: 0,
+    paddingTop: 24,
   },
   header: {
     flexDirection: 'row',
@@ -567,5 +683,21 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 18,
     resizeMode: 'cover',
+  },
+  myStoryBubble: {
+    position: 'relative',
+  },
+  plusBubble: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: Colors.dark.tint,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.dark.background,
   },
 }); 

@@ -1,15 +1,36 @@
 import { Colors } from '@/constants/Colors';
-import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import React, { useState } from 'react';
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const transactions = [
   { id: '1', type: 'Received', amount: '+2.5 SOL', date: '2024-06-01' },
   { id: '2', type: 'Sent', amount: '-1.0 SOL', date: '2024-05-30' },
 ];
 
+const WALLET_ID = '7f8a...b3c2';
+
 export default function FinancesScreen() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(WALLET_ID);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+    Alert.alert('Copied!', 'Wallet ID copied to clipboard.');
+  };
+
   return (
     <View style={styles.container}>
+      {/* Wallet ID Section */}
+      <View style={styles.walletIdRow}>
+        <Text style={styles.walletIdLabel}>Wallet ID:</Text>
+        <Text style={styles.walletId}>{WALLET_ID}</Text>
+        <TouchableOpacity onPress={handleCopy} style={styles.copyBtn}>
+          <Ionicons name="copy-outline" size={22} color={Colors.dark.tint} />
+        </TouchableOpacity>
+      </View>
       <View style={styles.balanceCard}>
         <Text style={styles.balanceLabel}>Wallet Balance</Text>
         <Text style={styles.balance}>4.2 SOL</Text>
@@ -35,6 +56,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
     padding: 16,
+    paddingTop: 48,
+  },
+  walletIdRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    backgroundColor: '#23243a',
+    borderRadius: 12,
+    padding: 12,
+  },
+  walletIdLabel: {
+    color: Colors.dark.icon,
+    fontSize: 15,
+    marginRight: 8,
+  },
+  walletId: {
+    color: Colors.dark.tint,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  copyBtn: {
+    padding: 6,
   },
   balanceCard: {
     backgroundColor: '#23243a',

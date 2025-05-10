@@ -19,7 +19,7 @@ export default function MessagesScreen() {
         data={demoChats}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.chatItem} onPress={() => router.push({ pathname: '/(tabs)/chat', params: { id: item.id, name: item.name, avatar: item.avatar } })}>
+          <TouchableOpacity style={styles.chatItem} onPress={() => router.push({ pathname: '/chat', params: { id: item.id, name: item.name, avatar: item.avatar } })}>
             <Image source={{ uri: item.avatar }} style={styles.avatar} />
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.name}</Text>

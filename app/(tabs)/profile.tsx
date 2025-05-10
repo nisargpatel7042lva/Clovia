@@ -22,6 +22,8 @@ export default function ProfileScreen() {
 
   // Filter for user's posts (demo: user === 'you')
   const userPosts = demoFeedPosts.filter(p => p.user === 'you');
+  const [showAllRecent, setShowAllRecent] = useState(false);
+  const visibleRecent = showAllRecent ? userPosts : userPosts.slice(0, 6);
 
   return (
     <View style={styles.container}>
@@ -31,21 +33,6 @@ export default function ProfileScreen() {
           <Ionicons name="menu" size={32} color={Colors.dark.tint} />
         </TouchableOpacity>
       </View>
-      {/* Recent Posts Horizontal Scroll */}
-      {userPosts.length > 0 && (
-        <View style={styles.recentPostsContainer}>
-          <Text style={styles.recentPostsTitle}>Recent Posts</Text>
-          <FlatList
-            data={userPosts}
-            keyExtractor={item => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <Image source={{ uri: item.image }} style={styles.recentPostImage} />
-            )}
-          />
-        </View>
-      )}
       <View style={styles.header}>
         <Image source={{ uri: 'https://randomuser.me/api/portraits/men/3.jpg' }} style={styles.avatar} />
         <Text style={styles.username}>@phantomuser</Text>
@@ -64,6 +51,27 @@ export default function ProfileScreen() {
           </View>
         </View>
       </View>
+      {/* Recent Posts Horizontal Scroll (no title) */}
+      {userPosts.length > 0 && (
+        <View style={styles.recentPostsContainer}>
+          <FlatList
+            data={visibleRecent}
+            keyExtractor={item => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item, index }) => (
+              <Image source={{ uri: item.image }} style={styles.recentPostImage} />
+            )}
+            ListFooterComponent={
+              !showAllRecent && userPosts.length > 6 ? (
+                <TouchableOpacity style={styles.showMoreIcon} onPress={() => setShowAllRecent(true)}>
+                  <Ionicons name="ellipsis-horizontal-circle" size={40} color={Colors.dark.tint} />
+                </TouchableOpacity>
+              ) : null
+            }
+          />
+        </View>
+      )}
       <Text style={styles.sectionTitle}>Posts</Text>
       <FlatList
         data={posts}
@@ -219,17 +227,13 @@ const styles = StyleSheet.create({
   recentPostsContainer: {
     marginBottom: 16,
   },
-  recentPostsTitle: {
-    color: Colors.dark.tint,
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 6,
-    marginLeft: 4,
-  },
   recentPostImage: {
     width: 70,
     height: 70,
     borderRadius: 12,
     marginRight: 10,
+  },
+  showMoreIcon: {
+    padding: 8,
   },
 }); 
