@@ -9,7 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { AuthProvider } from '../context/AuthContext';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -17,16 +17,15 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
   const [showSplash, setShowSplash] = useState(true);
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     if (loaded) {
-      const timer = setTimeout(() => setShowSplash(false), 2000);
-      return () => clearTimeout(timer);
+      setShowSplash(true);
     }
   }, [loaded]);
 
   if (!loaded) {
-    // Async font loading only occurs in development.
     return null;
   }
 
@@ -38,7 +37,6 @@ export default function RootLayout() {
           style={StyleSheet.absoluteFillObject}
           resizeMode={ResizeMode.COVER}
           shouldPlay
-          isLooping={false}
           onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
             if (status.isLoaded && status.didJustFinish) setShowSplash(false);
           }}
@@ -47,12 +45,14 @@ export default function RootLayout() {
     );
   }
 
+  // Only render the app after splash is done!
   return (
     <AuthProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
+          <Stack initialRouteName={isLoggedIn ? '(tabs)' : 'welcome'}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="welcome" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />
