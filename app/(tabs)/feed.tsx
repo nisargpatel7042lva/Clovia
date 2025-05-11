@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const demoUsers = [
@@ -249,6 +249,10 @@ export default function FeedScreen() {
     }
   };
 
+  const handleDeletePost = (postId: string) => {
+    setPosts(prev => prev.filter(p => p.id !== postId));
+  };
+
   const renderItem = ({ item, index }: { item: Post; index: number }) => {
     const onImagePress = () => {
       const now = Date.now();
@@ -259,6 +263,20 @@ export default function FeedScreen() {
     };
     return (
       <View style={styles.card}>
+        {/* Show delete button for user's own posts */}
+        {item.user === 'you' && (
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}
+            onPress={() => {
+              Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(item.id) },
+              ]);
+            }}
+          >
+            <Ionicons name="trash-outline" size={22} color="#ff3b5c" />
+          </TouchableOpacity>
+        )}
         <View style={styles.cardHeader}>
           <PostImage uri={item.avatar} style={styles.avatar} />
           <Text style={styles.user}>{item.user}</Text>
@@ -363,7 +381,7 @@ export default function FeedScreen() {
         showsHorizontalScrollIndicator={false}
         renderItem={({ item, index }) => (
           item.isMe ? (
-            <TouchableOpacity style={styles.storyItem} onPress={handleYourStory}>
+            <TouchableOpacity style={styles.storyItem} onPress={() => router.push('/post-story')}>
               <View style={styles.myStoryBubble}>
                 <LinearGradient
                   colors={["#aba0f1", "#a4508b", "#5f0a87"]}
@@ -374,7 +392,7 @@ export default function FeedScreen() {
                   <Image source={{ uri: item.avatar }} style={styles.storyAvatar} />
                 </LinearGradient>
                 <View style={styles.plusBubble}>
-                  <Ionicons name="add" size={18} color={Colors.dark.tint} />
+                  <Ionicons name="add" size={18} color="#000" />
                 </View>
               </View>
               <Text style={styles.storyUser}>Your Story</Text>

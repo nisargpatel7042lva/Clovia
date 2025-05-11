@@ -4,15 +4,17 @@ import React from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
+export const options = {
+  
+  headerShown: false,
+};
+
 export default function SettingsScreen() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={26} color={Colors.dark.tint} />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
       <View style={styles.section}>
@@ -36,7 +38,7 @@ export default function SettingsScreen() {
           <Ionicons name="notifications-outline" size={22} color={Colors.dark.tint} style={styles.itemIcon} />
           <Text style={styles.itemText}>Notifications</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity style={styles.item} onPress={() => router.push({ pathname: '/privacy' })}>
           <Ionicons name="lock-closed-outline" size={22} color={Colors.dark.tint} style={styles.itemIcon} />
           <Text style={styles.itemText}>Privacy</Text>
         </TouchableOpacity>
@@ -60,10 +62,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
-  },
-  backBtn: {
-    marginRight: 12,
-    padding: 4,
   },
   headerTitle: {
     color: Colors.dark.tint,

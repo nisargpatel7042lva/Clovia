@@ -21,9 +21,6 @@ export default function WalletDetailsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={26} color={Colors.dark.tint} />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Wallet Details</Text>
       </View>
       <View style={styles.walletCard}>
@@ -50,10 +47,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
-  },
-  backBtn: {
-    marginRight: 12,
-    padding: 4,
   },
   headerTitle: {
     color: Colors.dark.tint,

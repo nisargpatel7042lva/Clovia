@@ -56,9 +56,6 @@ export default function UserProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={{ color: Colors.dark.text, fontSize: 18, fontWeight: 'bold' }}>{'< Back'}</Text>
-      </TouchableOpacity>
       <Image source={{ uri: avatar as string }} style={styles.avatar} />
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.username}>@{username}</Text>
@@ -180,12 +177,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 64,
     paddingHorizontal: 24,
-  },
-  backBtn: {
-    position: 'absolute',
-    top: 40,
-    left: 16,
-    zIndex: 10,
   },
   avatar: {
     width: 100,

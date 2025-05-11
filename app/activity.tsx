@@ -1,7 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const demoActivities = [
@@ -18,9 +18,6 @@ export default function ActivityScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={26} color={Colors.dark.tint} />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Activity</Text>
       </View>
       <FlatList
@@ -52,10 +49,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
-  },
-  backBtn: {
-    marginRight: 12,
-    padding: 4,
   },
   headerTitle: {
     color: Colors.dark.tint,

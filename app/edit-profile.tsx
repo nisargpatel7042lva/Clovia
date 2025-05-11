@@ -2,7 +2,6 @@ import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -19,9 +18,6 @@ export default function EditProfileScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={26} color={Colors.dark.tint} />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
       </View>
       <View style={styles.form}>
@@ -74,10 +70,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
-  },
-  backBtn: {
-    marginRight: 12,
-    padding: 4,
   },
   headerTitle: {
     color: Colors.dark.tint,

@@ -26,9 +26,6 @@ export default function ChatScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 10 }}>
-          <Ionicons name="chevron-back" size={28} color={Colors.dark.tint} />
-        </TouchableOpacity>
         <Image source={{ uri: avatar }} style={styles.avatar} />
         <Text style={styles.name}>{name}</Text>
       </View>
