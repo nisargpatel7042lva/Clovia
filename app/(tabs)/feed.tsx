@@ -166,6 +166,19 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
+// Add PostImage component for fallback
+function PostImage({ uri, style }: { uri: string; style: any }) {
+  const [error, setError] = useState(false);
+  // Use a local placeholder image; make sure it exists in assets/images
+  return (
+    <Image
+      source={error ? require('../../assets/images/placeholder.png') : { uri }}
+      style={style}
+      onError={() => setError(true)}
+    />
+  );
+}
+
 export default function FeedScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [likeAnims, setLikeAnims] = useState(postsData.map(() => new Animated.Value(0)));
@@ -247,19 +260,13 @@ export default function FeedScreen() {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Image source={{ uri: item.avatar }} style={styles.avatar} />
+          <PostImage uri={item.avatar} style={styles.avatar} />
           <Text style={styles.user}>{item.user}</Text>
         </View>
         <TouchableOpacity activeOpacity={0.8} onPress={onImagePress} style={{ position: 'relative' }}>
-          <Image
-            source={{ uri: item.image }}
+          <PostImage
+            uri={item.image}
             style={styles.image}
-            onError={e => {
-              e.currentTarget.setNativeProps({
-                src: [{ uri: 'https://via.placeholder.com/400x300?text=No+Image' }]
-              });
-              console.warn('Image failed to load:', item.image);
-            }}
           />
           <Animated.View style={[styles.heartOverlay, { opacity: likeAnims[index], transform: [{ scale: likeAnims[index].interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }] }>
             <Ionicons name="heart" size={90} color="#ff3b5c" />
@@ -359,7 +366,7 @@ export default function FeedScreen() {
             <TouchableOpacity style={styles.storyItem} onPress={handleYourStory}>
               <View style={styles.myStoryBubble}>
                 <LinearGradient
-                  colors={["#a4508b", "#5f0a87", "#e0c3fc"]}
+                  colors={["#aba0f1", "#a4508b", "#5f0a87"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.storyGradientRing}
@@ -375,7 +382,7 @@ export default function FeedScreen() {
           ) : (
             <TouchableOpacity style={styles.storyItem} onPress={() => setStoryModal({ visible: true, storyIndex: index })}>
               <LinearGradient
-                colors={["#a4508b", "#5f0a87", "#e0c3fc"]}
+                colors={["#aba0f1", "#a4508b", "#5f0a87"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.storyGradientRing}
@@ -404,6 +411,7 @@ export default function FeedScreen() {
             {renderStories()}
           </>
         )}
+        contentContainerStyle={{ paddingBottom: 32 }}
         ListFooterComponent={<View style={{ height: 40 }} />}
       />
       {/* Story Post Modal (Instagram-like UI) */}
@@ -529,7 +537,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   card: {
-    backgroundColor: '#23243a',
+    backgroundColor: '#2d2e4a',
     borderRadius: 16,
     marginBottom: 16,
     padding: 12,

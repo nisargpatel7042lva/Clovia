@@ -1,6 +1,5 @@
 import { HapticTab } from '@/components/HapticTab';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -12,7 +11,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: '#23243a',
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
@@ -23,7 +23,7 @@ export default function TabLayout() {
             right: 16,
             bottom: 24,
             borderRadius: 32,
-            backgroundColor: 'rgba(30, 32, 48, 0.85)', // glassy dark
+            backgroundColor: '#aba0f1',
             borderWidth: 0.5,
             borderColor: 'rgba(255,255,255,0.08)',
             shadowColor: '#000',

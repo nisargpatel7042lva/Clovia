@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#2d2e4a',
+    borderTopColor: '#aba0f1',
     marginTop: 10,
   },
   recentPostsContainer: {
