@@ -1,22 +1,26 @@
 import { Colors } from '@/constants/Colors';
+import { db } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const demoChats = [
-  { id: 'chat1', name: 'Alice', avatar: 'https://randomuser.me/api/portraits/women/1.jpg', last: 'Hey there!' },
-  { id: 'chat2', name: 'Bob', avatar: 'https://randomuser.me/api/portraits/men/2.jpg', last: "Let's catch up." },
-  { id: 'group1', name: 'Crypto Group', avatar: 'https://randomuser.me/api/portraits/men/5.jpg', last: 'New event soon!' },
-];
-
 export default function MessagesScreen() {
   const router = useRouter();
+  const [chats, setChats] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    const q = query(collection(db, 'chats'), orderBy('lastMessageAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setChats(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return unsubscribe;
+  }, []);
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Messages</Text>
       <FlatList
-        data={demoChats}
+        data={chats}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.chatItem} onPress={() => router.push({ pathname: '/chat', params: { id: item.id, name: item.name, avatar: item.avatar } })}>

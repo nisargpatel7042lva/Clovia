@@ -1,19 +1,21 @@
 import { Colors } from '@/constants/Colors';
+import { db } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const demoActivities = [
-  { id: 'a1', type: 'like', text: "You liked Alice's post", icon: 'heart', time: '2m ago' },
-  { id: 'a2', type: 'follow', text: 'You followed @bob', icon: 'person-add', time: '10m ago' },
-  { id: 'a3', type: 'like', text: "You liked Dave's post", icon: 'heart', time: '1h ago' },
-  { id: 'a4', type: 'stake', text: 'You staked 2.5 SOL to follow @carol', icon: 'wallet', time: '2h ago' },
-  { id: 'a5', type: 'unfollow', text: 'You unfollowed @eve', icon: 'person-remove', time: '1d ago' },
-];
-
 export default function ActivityScreen() {
   const router = useRouter();
+  const [activities, setActivities] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    const q = query(collection(db, 'activities'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -21,7 +23,7 @@ export default function ActivityScreen() {
         <Text style={styles.headerTitle}>Activity</Text>
       </View>
       <FlatList
-        data={demoActivities}
+        data={activities}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={styles.activityItem}>

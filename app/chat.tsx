@@ -1,25 +1,33 @@
 import { Colors } from '@/constants/Colors';
+import { db } from '@/lib/firebase';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const demoMessages = [
-  { id: 'm1', fromMe: false, text: 'Hey! 👋' },
-  { id: 'm2', fromMe: true, text: 'Hi! How are you?' },
-  { id: 'm3', fromMe: false, text: 'Doing great, you?' },
-  { id: 'm4', fromMe: true, text: 'Awesome!' },
-];
-
 export default function ChatScreen() {
-  const { name, avatar } = useLocalSearchParams<{ name: string; avatar: string }>();
-  const [messages, setMessages] = useState(demoMessages);
+  const { name, avatar, id } = useLocalSearchParams<{ name: string; avatar: string; id: string }>();
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const router = useRouter();
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    setMessages((prev) => [...prev, { id: `m${Date.now()}`, fromMe: true, text: input }]);
+  useEffect(() => {
+    if (!id) return;
+    const q = query(collection(db, 'chats', id as string, 'messages'), orderBy('createdAt', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return unsubscribe;
+  }, [id]);
+
+  const handleSend = async () => {
+    if (!input.trim() || !id) return;
+    await addDoc(collection(db, 'chats', id as string, 'messages'), {
+      text: input,
+      fromMe: true, // You can replace with userId logic
+      createdAt: serverTimestamp(),
+    });
     setInput('');
   };
 

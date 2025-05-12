@@ -1,8 +1,10 @@
 import { Colors } from '@/constants/Colors';
+import { db } from '@/lib/firebase';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -281,15 +283,18 @@ export default function FeedScreen() {
           <PostImage uri={item.avatar} style={styles.avatar} />
           <Text style={styles.user}>{item.user}</Text>
         </View>
-        <TouchableOpacity activeOpacity={0.8} onPress={onImagePress} style={{ position: 'relative' }}>
-          <PostImage
-            uri={item.image}
-            style={styles.image}
-          />
-          <Animated.View style={[styles.heartOverlay, { opacity: likeAnims[index], transform: [{ scale: likeAnims[index].interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }] }>
-            <Ionicons name="heart" size={90} color="#ff3b5c" />
-          </Animated.View>
-        </TouchableOpacity>
+        {/* Only render image if present */}
+        {item.image && typeof item.image === 'string' && item.image.trim() !== '' && (
+          <TouchableOpacity activeOpacity={0.8} onPress={onImagePress} style={{ position: 'relative' }}>
+            <PostImage
+              uri={item.image}
+              style={styles.image}
+            />
+            <Animated.View style={[styles.heartOverlay, { opacity: likeAnims[index], transform: [{ scale: likeAnims[index].interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }] }>
+              <Ionicons name="heart" size={90} color="#ff3b5c" />
+            </Animated.View>
+          </TouchableOpacity>
+        )}
         <View style={styles.actionsRow}>
           <TouchableOpacity onPress={() => handleLike(index)}>
             <Ionicons name={liked[index] ? 'heart' : 'heart-outline'} size={28} color={liked[index] ? '#ff3b5c' : Colors.dark.tint} />
@@ -333,7 +338,16 @@ export default function FeedScreen() {
   }, [navigation]);
 
   useEffect(() => {
-    setPosts(shuffleArray(postsData));
+    const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const firestorePosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      if (firestorePosts.length === 0) {
+        setPosts(postsData);
+      } else {
+        setPosts(firestorePosts);
+      }
+    });
+    return unsubscribe;
   }, []);
 
   // Add meme to feed if coming from meme-generator

@@ -1,12 +1,16 @@
 import { Colors } from '@/constants/Colors';
+import { db } from '@/lib/firebase';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function PostScreen() {
   const [text, setText] = useState('');
   const [image, setImage] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
 
   const pickImage = async () => {
@@ -21,15 +25,31 @@ export default function PostScreen() {
     }
   };
 
-  const handlePost = () => {
-    // In a real app, this would update the feed context or global state
+  const handlePost = async () => {
+    if (!text && !image) return;
+    await addDoc(collection(db, 'posts'), {
+      user: 'you',
+      avatar: 'https://randomuser.me/api/portraits/men/99.jpg',
+      image: image || '',
+      text,
+      likes: 0,
+      comments: [],
+      createdAt: serverTimestamp(),
+    });
     setText('');
     setImage(null);
-    Alert.alert('Posted!', 'Your post has been added to the feed.');
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   return (
     <View style={styles.container}>
+      {showSuccess && (
+        <View style={styles.successBox}>
+          <Ionicons name="checkmark-circle" size={28} color="#2ecc40" style={{ marginRight: 8 }} />
+          <Text style={styles.successText}>Your post is live!</Text>
+        </View>
+      )}
       <View style={styles.card}>
         <Text style={styles.title}>Create Post</Text>
         <TextInput
@@ -142,5 +162,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     letterSpacing: 1.1,
+  },
+  successBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eafbe7',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#2ecc40',
+  },
+  successText: {
+    color: '#2ecc40',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 }); 
