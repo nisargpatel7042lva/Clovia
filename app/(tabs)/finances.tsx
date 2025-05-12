@@ -19,7 +19,7 @@ export default function FinancesScreen() {
 
   const APP_IDENTITY = {
     name: 'Clovia',
-    uri: 'https://clovia.app', // Update to your app's URI
+    uri: 'clovia://', // Use your app's scheme for dev builds
     icon: 'icon.png', // Path relative to the URI
   };
 

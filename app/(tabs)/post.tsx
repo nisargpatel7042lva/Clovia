@@ -27,27 +27,41 @@ export default function PostScreen() {
 
   const handlePost = async () => {
     if (!text && !image) return;
-    await addDoc(collection(db, 'posts'), {
-      user: 'you',
-      avatar: 'https://randomuser.me/api/portraits/men/99.jpg',
-      image: image || '',
-      text,
-      likes: 0,
-      comments: [],
-      createdAt: serverTimestamp(),
-    });
-    setText('');
-    setImage(null);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+    try {
+      await addDoc(collection(db, 'posts'), {
+        user: 'you',
+        avatar: 'https://randomuser.me/api/portraits/men/99.jpg',
+        image: image || '',
+        text,
+        likes: 0,
+        comments: [],
+        createdAt: serverTimestamp(),
+      });
+      setText('');
+      setImage(null);
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        try {
+          router.push('/feed');
+        } catch (e) {
+          // fallback for navigation error
+          alert('Posted! Please switch to the Feed tab to see your post.');
+        }
+      }, 1200);
+    } catch (e) {
+      alert('Failed to post. Please try again.');
+    }
   };
 
   return (
     <View style={styles.container}>
       {showSuccess && (
-        <View style={styles.successBox}>
-          <Ionicons name="checkmark-circle" size={28} color="#2ecc40" style={{ marginRight: 8 }} />
-          <Text style={styles.successText}>Your post is live!</Text>
+        <View style={styles.successOverlay}>
+          <View style={styles.successBox}>
+            <Ionicons name="checkmark-circle" size={48} color="#2ecc40" style={{ marginRight: 14 }} />
+            <Text style={styles.successText}>Your post is live!</Text>
+          </View>
         </View>
       )}
       <View style={styles.card}>
@@ -67,14 +81,19 @@ export default function PostScreen() {
         <TouchableOpacity style={styles.button} onPress={handlePost} disabled={!text && !image}>
           <Text style={styles.buttonText}>Post</Text>
         </TouchableOpacity>
+        <View style={styles.orContainer}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>OR</Text>
+          <View style={styles.orLine} />
+        </View>
+        <TouchableOpacity
+          style={styles.memeButton}
+          onPress={() => router.push('/meme-generator')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.memeButtonText}>Create Meme</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={styles.memeButton}
-        onPress={() => router.push('/meme-generator')}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.memeButtonText}>Create Meme</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -88,14 +107,19 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#23243a',
-    borderRadius: 16,
-    padding: 24,
-    width: '90%',
+    borderRadius: 24,
+    padding: 32,
+    width: '98%',
+    minHeight: '88%',
+    maxHeight: '94%',
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+    elevation: 3,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 0,
+    marginTop: 0,
   },
   title: {
     color: Colors.dark.tint,
@@ -163,19 +187,50 @@ const styles = StyleSheet.create({
     fontSize: 18,
     letterSpacing: 1.1,
   },
+  successOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    zIndex: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   successBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#eafbe7',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 18,
+    borderRadius: 16,
+    padding: 24,
     borderWidth: 1,
     borderColor: '#2ecc40',
+    alignSelf: 'center',
   },
   successText: {
     color: '#2ecc40',
     fontWeight: 'bold',
+    fontSize: 22,
+  },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  orLine: {
+    flex: 1,
+    height: 1.5,
+    backgroundColor: '#444',
+    marginHorizontal: 10,
+    borderRadius: 1,
+  },
+  orText: {
+    color: Colors.dark.icon,
+    fontWeight: 'bold',
     fontSize: 16,
+    letterSpacing: 1.2,
   },
 }); 
