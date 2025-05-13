@@ -1,8 +1,13 @@
 import { Colors } from '@/constants/Colors';
-import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useUser } from '../../context/UserContext';
+import { PremiumText } from '../_layout';
+import { demoPosts } from './feed';
 
 // Demo: import posts from feed
 const demoFeedPosts = [
@@ -20,67 +25,96 @@ const posts = [
 export default function ProfileScreen() {
   const stakedAmount = '3.7 SOL';
   const router = useRouter();
+  const { profilePic, setProfilePic } = useUser();
+  const params = useLocalSearchParams();
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Filter for user's posts (demo: user === 'you')
-  const userPosts = demoFeedPosts.filter(p => p.user === 'you');
-  const [showAllRecent, setShowAllRecent] = useState(false);
-  const visibleRecent = showAllRecent ? userPosts : userPosts.slice(0, 6);
+  useFocusEffect(
+    React.useCallback(() => {
+      setRefreshKey(k => k + 1);
+    }, [params.refresh])
+  );
+
+  // Get all posts by the current user from demoPosts
+  const userPosts = demoPosts.filter(p => p.user === 'you');
+  // Demo followers/following
+  const followers = 1234;
+  const following = 321;
+
+  const handleChangeProfilePic = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setProfilePic(result.assets[0].uri);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.menuIcon} onPress={() => router.push('/settings')}>
-          <Ionicons name="menu" size={32} color={Colors.dark.tint} />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.header}>
-        <Image source={{ uri: 'https://randomuser.me/api/portraits/men/3.jpg' }} style={styles.avatar} />
-        <Text style={styles.username}>@phantomuser</Text>
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>120</Text>
-            <Text style={styles.statLabel}>Posts</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>2.3k</Text>
-            <Text style={styles.statLabel}>Followers</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>180</Text>
-            <Text style={styles.statLabel}>Following</Text>
-          </View>
-        </View>
-      </View>
-      {/* Recent Posts Horizontal Scroll (no title) */}
-      {userPosts.length > 0 && (
-        <View style={styles.recentPostsContainer}>
-          <FlatList
-            data={visibleRecent}
-            keyExtractor={item => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item, index }) => (
-              <Image source={{ uri: item.image }} style={styles.recentPostImage} />
-            )}
-            ListFooterComponent={
-              !showAllRecent && userPosts.length > 6 ? (
-                <TouchableOpacity style={styles.showMoreIcon} onPress={() => setShowAllRecent(true)}>
-                  <Ionicons name="ellipsis-horizontal-circle" size={40} color={Colors.dark.tint} />
-                </TouchableOpacity>
-              ) : null
-            }
-          />
-        </View>
-      )}
-      <Text style={styles.sectionTitle}>Posts</Text>
       <FlatList
-        data={posts}
+        data={demoPosts.filter(p => p.user === 'you')}
+        key={refreshKey}
         keyExtractor={item => item.id}
-        numColumns={3}
-        renderItem={({ item }) => (
-          <Image source={{ uri: item.image }} style={styles.postImage} />
+        ListHeaderComponent={() => (
+          <>
+            <View style={styles.topBar}>
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity style={styles.menuIcon} onPress={() => router.push('/settings')}>
+                <Ionicons name="menu" size={32} color={Colors.dark.tint} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.header}>
+              <Image source={{ uri: profilePic }} style={styles.avatar} />
+              <PremiumText style={styles.username}>@phantomuser</PremiumText>
+              <View style={styles.statsRow}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statNumber}>{userPosts.length}</Text>
+                  <Text style={styles.statLabel}>Posts</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statNumber}>{followers}</Text>
+                  <Text style={styles.statLabel}>Followers</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statNumber}>{following}</Text>
+                  <Text style={styles.statLabel}>Following</Text>
+                </View>
+              </View>
+            </View>
+            <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>Posts</Text>
+          </>
         )}
+        renderItem={({ item }) => (
+          <View style={styles.timelineCard}>
+            <View style={styles.timelineHeader}>
+              <Image source={{ uri: profilePic }} style={styles.timelineAvatar} />
+              <View style={{ marginLeft: 10 }}>
+                <Text style={styles.timelineUser}>@phantomuser</Text>
+                <Text style={styles.timelineText}>{item.text}</Text>
+              </View>
+            </View>
+            {item.image && item.image.trim() !== '' && (
+              <Image source={{ uri: item.image }} style={styles.timelineImage} />
+            )}
+            {/* Show thread (replies by 'you') */}
+            {item.comments && item.comments.filter(c => c.user === 'you').length > 0 && (
+              <View style={styles.threadContainer}>
+                {item.comments.filter(c => c.user === 'you').map(c => (
+                  <View key={c.id} style={styles.threadReply}>
+                    <Image source={{ uri: profilePic }} style={styles.threadAvatar} />
+                    <Text style={styles.threadText}>{c.text}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        contentContainerStyle={{ paddingBottom: 80 }}
       />
     </View>
   );
@@ -143,11 +177,65 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  postImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-    margin: 4,
+  timelineCard: {
+    backgroundColor: '#2d2e4a',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 0,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  timelineAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  timelineUser: {
+    color: Colors.dark.tint,
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  timelineText: {
+    color: Colors.dark.text,
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  timelineImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginTop: 6,
+    backgroundColor: '#1a1a2e',
+  },
+  threadContainer: {
+    marginTop: 8,
+    marginLeft: 46,
+    borderLeftWidth: 2,
+    borderLeftColor: Colors.dark.icon,
+    paddingLeft: 10,
+  },
+  threadReply: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  threadAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  threadText: {
+    color: Colors.dark.text,
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
@@ -204,5 +292,45 @@ const styles = StyleSheet.create({
   },
   showMoreIcon: {
     padding: 8,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  toggleBtn: {
+    backgroundColor: 'transparent',
+    padding: 8,
+    marginHorizontal: 4,
+    borderRadius: 8,
+  },
+  toggleBtnActive: {
+    backgroundColor: Colors.dark.tint,
+  },
+  postImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  gridCard: {
+    backgroundColor: '#2d2e4a',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  gridUser: {
+    color: Colors.dark.tint,
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  gridText: {
+    color: Colors.dark.text,
+    fontSize: 14,
   },
 }); 

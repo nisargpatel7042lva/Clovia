@@ -1,8 +1,11 @@
 import { Colors } from '@/constants/Colors';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useUser } from '../context/UserContext';
+import { PremiumText } from './_layout';
 
 export const options = {
   
@@ -11,41 +14,58 @@ export const options = {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { profilePic, setProfilePic } = useUser();
+
+  const handleChangeProfilePic = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setProfilePic(result.assets[0].uri);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <PremiumText style={styles.headerTitle}>Settings</PremiumText>
       </View>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
+        <PremiumText style={styles.sectionTitle}>Account</PremiumText>
+        <TouchableOpacity style={styles.item} onPress={handleChangeProfilePic}>
+          <Image source={{ uri: profilePic }} style={{ width: 36, height: 36, borderRadius: 18, marginRight: 14 }} />
+          <PremiumText style={styles.itemText}>Change Profile Picture</PremiumText>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.item} onPress={() => router.push('/edit-profile')}>
           <Ionicons name="person-outline" size={22} color={Colors.dark.tint} style={styles.itemIcon} />
-          <Text style={styles.itemText}>Edit Profile</Text>
+          <PremiumText style={styles.itemText}>Edit Profile</PremiumText>
         </TouchableOpacity>
         <TouchableOpacity style={styles.item} onPress={() => router.push('/wallet-details')}>
           <Ionicons name="wallet-outline" size={22} color={Colors.dark.tint} style={styles.itemIcon} />
-          <Text style={styles.itemText}>Wallet Details</Text>
+          <PremiumText style={styles.itemText}>Wallet Details</PremiumText>
         </TouchableOpacity>
         <TouchableOpacity style={styles.item} onPress={() => router.push('/activity')}>
           <Ionicons name="pulse-outline" size={22} color={Colors.dark.tint} style={styles.itemIcon} />
-          <Text style={styles.itemText}>Activity</Text>
+          <PremiumText style={styles.itemText}>Activity</PremiumText>
         </TouchableOpacity>
       </View>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
+        <PremiumText style={styles.sectionTitle}>Preferences</PremiumText>
         <TouchableOpacity style={styles.item}>
           <Ionicons name="notifications-outline" size={22} color={Colors.dark.tint} style={styles.itemIcon} />
-          <Text style={styles.itemText}>Notifications</Text>
+          <PremiumText style={styles.itemText}>Notifications</PremiumText>
         </TouchableOpacity>
         <TouchableOpacity style={styles.item} onPress={() => router.push({ pathname: '/privacy' })}>
           <Ionicons name="lock-closed-outline" size={22} color={Colors.dark.tint} style={styles.itemIcon} />
-          <Text style={styles.itemText}>Privacy</Text>
+          <PremiumText style={styles.itemText}>Privacy</PremiumText>
         </TouchableOpacity>
       </View>
       <TouchableOpacity style={styles.logoutBtn} onPress={() => Alert.alert('Logged out', 'You have been logged out.') }>
         <Ionicons name="log-out-outline" size={22} color={Colors.dark.background} style={styles.itemIcon} />
-        <Text style={styles.logoutText}>Log Out</Text>
+        <PremiumText style={styles.logoutText}>Log Out</PremiumText>
       </TouchableOpacity>
     </View>
   );

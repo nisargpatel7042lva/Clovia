@@ -4,17 +4,33 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { Text as RNText, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { UserProvider } from '../context/UserContext';
+
+// Create a PremiumText component for global use
+export function PremiumText(props: React.ComponentProps<typeof RNText>) {
+  // Use Montserrat-Bold if fontWeight is bold, else Montserrat-Regular
+  let fontFamily = 'Montserrat-Regular';
+  if (props.style) {
+    const stylesArray = Array.isArray(props.style) ? props.style : [props.style];
+    if (stylesArray.some(s => s && (s as React.CSSProperties).fontWeight === 'bold')) {
+      fontFamily = 'Montserrat-Bold';
+    }
+  }
+  return <RNText {...props} style={[{ fontFamily }, props.style]} />;
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    'Montserrat-Regular': require('../assets/fonts/Montserrat/static/Montserrat-Regular.ttf'),
+    'Montserrat-Bold': require('../assets/fonts/Montserrat/static/Montserrat-Bold.ttf'),
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'), // for legacy
   });
   const [showSplash, setShowSplash] = useState(true);
   const { isLoggedIn } = useAuth();
@@ -47,17 +63,19 @@ export default function RootLayout() {
 
   // Only render the app after splash is done!
   return (
-    <AuthProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack initialRouteName={isLoggedIn ? '(tabs)' : 'welcome'}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="welcome" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </GestureHandlerRootView>
-    </AuthProvider>
+    <UserProvider>
+      <AuthProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack initialRouteName={isLoggedIn ? '(tabs)' : 'welcome'}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="welcome" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </GestureHandlerRootView>
+      </AuthProvider>
+    </UserProvider>
   );
 }

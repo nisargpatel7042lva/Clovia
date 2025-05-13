@@ -1,8 +1,9 @@
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { PremiumText } from '../_layout';
 
 const trending = [
   { id: '1', topic: '#Solana' },
@@ -39,7 +40,7 @@ export default function SearchScreen() {
         value={query}
         onChangeText={setQuery}
       />
-      <Text style={styles.sectionTitle}>Users</Text>
+      <PremiumText style={styles.sectionTitle}>Users</PremiumText>
       <FlatList
         data={filteredUsers}
         keyExtractor={item => item.id}
@@ -48,8 +49,8 @@ export default function SearchScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Image source={{ uri: item.avatar }} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }} />
               <View>
-                <Text style={{ color: Colors.dark.text, fontSize: 16, fontWeight: 'bold' }}>{item.name}</Text>
-                <Text style={{ color: Colors.dark.icon, fontSize: 14 }}>@{item.username}</Text>
+                <PremiumText style={{ color: Colors.dark.text, fontSize: 16, fontWeight: 'bold' }}>{item.name}</PremiumText>
+                <PremiumText style={{ color: Colors.dark.icon, fontSize: 14 }}>@{item.username}</PremiumText>
               </View>
             </View>
           </TouchableOpacity>
@@ -57,7 +58,7 @@ export default function SearchScreen() {
       />
       {/* Collapsible Trending Section */}
       <TouchableOpacity style={styles.collapseHeader} onPress={() => setTrendingOpen(o => !o)}>
-        <Text style={styles.sectionTitle}>Trending</Text>
+        <PremiumText style={styles.sectionTitle}>Trending</PremiumText>
         <Ionicons name={trendingOpen ? 'chevron-up' : 'chevron-down'} size={20} color={Colors.dark.tint} style={{ marginLeft: 8 }} />
       </TouchableOpacity>
       {trendingOpen && (
@@ -66,7 +67,7 @@ export default function SearchScreen() {
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.trendCard}>
-              <Text style={styles.trendText}>{item.topic}</Text>
+              <PremiumText style={styles.trendText}>{item.topic}</PremiumText>
             </TouchableOpacity>
           )}
         />

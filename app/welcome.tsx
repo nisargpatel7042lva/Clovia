@@ -1,10 +1,12 @@
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import Swiper from 'react-native-swiper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../context/AuthContext';
+import { PremiumText } from './_layout';
 
 const { width } = Dimensions.get('window');
 
@@ -16,6 +18,22 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const { login } = useAuth();
 
+  // Animation for arrow
+  const arrowTranslate = useSharedValue(0);
+  React.useEffect(() => {
+    arrowTranslate.value = withRepeat(
+      withSequence(
+        withTiming(12, { duration: 600 }),
+        withTiming(0, { duration: 600 })
+      ),
+      -1,
+      true
+    );
+  }, []);
+  const arrowAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: arrowTranslate.value }],
+  }));
+
   const handleSkip = () => {
     // login();
     router.replace('/feed');
@@ -25,7 +43,7 @@ export default function WelcomeScreen() {
     <View style={{ flex: 1 }}>
       {/* Skip button at top right */}
       <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
-        <Text style={styles.skipBtnText}>Skip</Text>
+        <PremiumText style={styles.skipBtnText}>Skip</PremiumText>
       </TouchableOpacity>
       <Swiper
         loop={false}
@@ -37,31 +55,35 @@ export default function WelcomeScreen() {
         {/* Slide 1: Welcome */}
         <View style={styles.slide}>
           <Image source={require('../assets/images/icon.png')} style={styles.logo} />
-          <Text style={styles.appName}>Clovia</Text>
-          <Text style={styles.welcomeText}>Welcome to Clovia!</Text>
-          <Text style={styles.descText}>A premium, secure, and social Web3 experience.</Text>
+          <PremiumText style={styles.appName}>Clovia</PremiumText>
+          <PremiumText style={styles.welcomeText}>Welcome to Clovia!</PremiumText>
+          <PremiumText style={styles.descText}>A premium, secure, and social Web3 experience.</PremiumText>
+          {/* Animated right arrow indicator for more slides */}
+          <Animated.View style={[styles.arrowContainer, arrowAnimStyle]}>
+            <Ionicons name="arrow-forward" size={28} color={Colors.dark.tint} />
+          </Animated.View>
         </View>
         {/* Slide 2: Mission & Vision */}
         <View style={styles.slide}>
-          <Text style={styles.slideTitle}>Our Mission</Text>
-          <Text style={styles.slideText}>
+          <PremiumText style={styles.slideTitle}>Our Mission</PremiumText>
+          <PremiumText style={styles.slideText}>
             To turn everyday social media engagement into meaningful financial participation—empowering users to earn while they connect, follow, and engage.
-          </Text>
-          <Text style={styles.slideTitle}>Our Vision</Text>
-          <Text style={styles.slideText}>
+          </PremiumText>
+          <PremiumText style={styles.slideTitle}>Our Vision</PremiumText>
+          <PremiumText style={styles.slideText}>
             To redefine the global social experience by merging entertainment with DeFi, becoming the leading platform for social staking and creator-backed economies on Solana.
-          </Text>
+          </PremiumText>
         </View>
         
         {/* Slide 3: Connect Wallet */}
         <View style={styles.slide}>
-          <Text style={styles.slideTitle}>Get Started</Text>
-          <Text style={styles.slideText}>
+          <PremiumText style={styles.slideTitle}>Get Started</PremiumText>
+          <PremiumText style={styles.slideText}>
             Connect your wallet to unlock the full Clovia experience.
-          </Text>
+          </PremiumText>
           <TouchableOpacity style={styles.walletBtn} onPress={() => { /* login(); */ router.replace('/feed'); }}>
             <Ionicons name="wallet-outline" size={22} color={Colors.dark.background} style={{ marginRight: 10 }} />
-            <Text style={styles.walletBtnText}>Connect Wallet</Text>
+            <PremiumText style={styles.walletBtnText}>Connect Wallet</PremiumText>
           </TouchableOpacity>
         </View>
       </Swiper>
@@ -167,5 +189,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 1.1,
+  },
+  arrowContainer: {
+    position: 'absolute',
+    bottom: 70,
+    right: 36,
+    backgroundColor: '#23243acc',
+    borderRadius: 20,
+    padding: 6,
+    zIndex: 20,
+    elevation: 10,
   },
 }); 

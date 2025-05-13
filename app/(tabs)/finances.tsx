@@ -2,8 +2,9 @@ import { Colors } from '@/constants/Colors';
 import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
 import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { PremiumText } from '../_layout';
 
 const transactions = [
   { id: '1', type: 'Received', amount: '+2.5 SOL', date: '2024-06-01' },
@@ -64,36 +65,36 @@ export default function FinancesScreen() {
         onPress={handleConnectWallet}
         disabled={!!walletAddress || connecting}
       >
-        <Text style={{ color: Colors.dark.background, fontWeight: 'bold', fontSize: 16 }}>
+        <PremiumText style={{ color: Colors.dark.background, fontWeight: 'bold', fontSize: 16 }}>
           {walletAddress ? 'Wallet Connected' : connecting ? 'Connecting...' : 'Connect Wallet'}
-        </Text>
+        </PremiumText>
         {walletAddress && (
-          <Text style={{ color: Colors.dark.background, fontSize: 13, marginTop: 4 }} numberOfLines={1}>
+          <PremiumText style={{ color: Colors.dark.background, fontSize: 13, marginTop: 4 }} numberOfLines={1}>
             {walletAddress}
-          </Text>
+          </PremiumText>
         )}
       </TouchableOpacity>
       {/* Wallet ID Section */}
       <View style={styles.walletIdRow}>
-        <Text style={styles.walletIdLabel}>Wallet ID:</Text>
-        <Text style={styles.walletId}>{WALLET_ID}</Text>
+        <PremiumText style={styles.walletIdLabel}>Wallet ID:</PremiumText>
+        <PremiumText style={styles.walletId}>{WALLET_ID}</PremiumText>
         <TouchableOpacity onPress={handleCopy} style={styles.copyBtn}>
           <Ionicons name="copy-outline" size={22} color={Colors.dark.tint} />
         </TouchableOpacity>
       </View>
       <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Wallet Balance</Text>
-        <Text style={styles.balance}>4.2 SOL</Text>
+        <PremiumText style={styles.balanceLabel}>Wallet Balance</PremiumText>
+        <PremiumText style={styles.balance}>4.2 SOL</PremiumText>
       </View>
-      <Text style={styles.sectionTitle}>Recent Transactions</Text>
+      <PremiumText style={styles.sectionTitle}>Recent Transactions</PremiumText>
       <FlatList
         data={transactions}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={styles.transactionCard}>
-            <Text style={styles.transactionType}>{item.type}</Text>
-            <Text style={styles.transactionAmount}>{item.amount}</Text>
-            <Text style={styles.transactionDate}>{item.date}</Text>
+            <PremiumText style={styles.transactionType}>{item.type}</PremiumText>
+            <PremiumText style={styles.transactionAmount}>{item.amount}</PremiumText>
+            <PremiumText style={styles.transactionDate}>{item.date}</PremiumText>
           </View>
         )}
       />

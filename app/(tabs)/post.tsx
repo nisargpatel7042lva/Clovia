@@ -6,12 +6,17 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useUser } from '../../context/UserContext';
+import { demoPosts } from './feed';
+
+const DEMO_MODE = true;
 
 export default function PostScreen() {
   const [text, setText] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
+  const { profilePic } = useUser();
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -27,10 +32,35 @@ export default function PostScreen() {
 
   const handlePost = async () => {
     if (!text && !image) return;
+    if (DEMO_MODE) {
+      // Simulate post in demo mode
+      const newPost = {
+        id: `demo-${Date.now()}`,
+        user: 'you',
+        avatar: profilePic,
+        image: image || '',
+        text,
+        likes: 0,
+        comments: [],
+      };
+      demoPosts.unshift(newPost); // Add to the start of the array
+      setShowSuccess(true);
+      setText('');
+      setImage(null);
+      setTimeout(() => {
+        setShowSuccess(false);
+        try {
+          router.push({ pathname: '/feed', params: { reload: Date.now().toString() } });
+        } catch (e) {
+          alert('Posted! Please switch to the Feed tab to see your post.');
+        }
+      }, 300);
+      return;
+    }
     try {
       await addDoc(collection(db, 'posts'), {
         user: 'you',
-        avatar: 'https://randomuser.me/api/portraits/men/99.jpg',
+        avatar: profilePic,
         image: image || '',
         text,
         likes: 0,
@@ -43,12 +73,11 @@ export default function PostScreen() {
       setTimeout(() => {
         setShowSuccess(false);
         try {
-          router.push('/feed');
+          router.push({ pathname: '/feed', params: { reload: Date.now().toString() } });
         } catch (e) {
-          // fallback for navigation error
           alert('Posted! Please switch to the Feed tab to see your post.');
         }
-      }, 1200);
+      }, 300);
     } catch (e) {
       alert('Failed to post. Please try again.');
     }

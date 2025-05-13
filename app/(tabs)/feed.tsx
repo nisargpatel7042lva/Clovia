@@ -8,6 +8,7 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useUser } from '../../context/UserContext';
 
 const demoUsers = [
   { id: 'u1', name: 'Alice' },
@@ -16,7 +17,8 @@ const demoUsers = [
   { id: 'g2', name: 'Solana Fans' },
 ];
 
-const postsData = [
+// Move postsData to a global mutable array for demo mode
+export const demoPosts = [
   {
     id: '1',
     user: 'alice',
@@ -141,9 +143,61 @@ const postsData = [
       { id: 'c8', user: 'frank', text: 'Preach!' },
     ],
   },
+  {
+    id: '13',
+    user: 'mia',
+    avatar: 'https://randomuser.me/api/portraits/women/13.jpg',
+    image: 'https://images.unsplash.com/photo-1465101126786-2eec1d8d1b1a',
+    text: 'Just launched my NFT collection! 🚀',
+    likes: 18,
+    comments: [
+      { id: 'c9', user: 'leo', text: 'Congrats!' },
+      { id: 'c10', user: 'alice', text: 'Link?' },
+    ],
+  },
+  {
+    id: '14',
+    user: 'nina',
+    avatar: 'https://randomuser.me/api/portraits/women/14.jpg',
+    image: 'https://images.unsplash.com/photo-1465101137897-2eec1d8d1b1a',
+    text: 'Solana hackathon was amazing! #web3',
+    likes: 7,
+    comments: [],
+  },
+  {
+    id: '15',
+    user: 'oliver',
+    avatar: 'https://randomuser.me/api/portraits/men/15.jpg',
+    image: 'https://images.unsplash.com/photo-1465101148908-2eec1d8d1b1a',
+    text: 'Who else is staking today?',
+    likes: 4,
+    comments: [
+      { id: 'c11', user: 'mia', text: 'Me!' },
+    ],
+  },
+  {
+    id: '16',
+    user: 'paula',
+    avatar: 'https://randomuser.me/api/portraits/women/16.jpg',
+    image: 'https://images.unsplash.com/photo-1465101159019-2eec1d8d1b1a',
+    text: 'Art, coffee, and code.',
+    likes: 9,
+    comments: [],
+  },
+  {
+    id: '17',
+    user: 'quentin',
+    avatar: 'https://randomuser.me/api/portraits/men/17.jpg',
+    image: 'https://images.unsplash.com/photo-1465101160120-2eec1d8d1b1a',
+    text: 'Just joined Clovia! Excited to connect.',
+    likes: 2,
+    comments: [
+      { id: 'c12', user: 'bob', text: 'Welcome!' },
+    ],
+  },
 ];
 
-type Post = typeof postsData[number];
+type Post = typeof demoPosts[number];
 
 type Comment = { id: string; user: string; text: string };
 
@@ -156,6 +210,9 @@ const demoStories = [
   { id: 's3', user: 'carol', avatar: 'https://randomuser.me/api/portraits/women/3.jpg', image: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308' },
   { id: 's4', user: 'dave', avatar: 'https://randomuser.me/api/portraits/men/4.jpg', image: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429' },
   { id: 's5', user: 'eve', avatar: 'https://randomuser.me/api/portraits/women/5.jpg', image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99' },
+  { id: 's6', user: 'mia', avatar: 'https://randomuser.me/api/portraits/women/13.jpg', image: 'https://images.unsplash.com/photo-1465101126786-2eec1d8d1b1a' },
+  { id: 's7', user: 'oliver', avatar: 'https://randomuser.me/api/portraits/men/15.jpg', image: 'https://images.unsplash.com/photo-1465101148908-2eec1d8d1b1a' },
+  { id: 's8', user: 'paula', avatar: 'https://randomuser.me/api/portraits/women/16.jpg', image: 'https://images.unsplash.com/photo-1465101159019-2eec1d8d1b1a' },
 ];
 
 // Fisher-Yates shuffle
@@ -181,11 +238,29 @@ function PostImage({ uri, style }: { uri: string; style: any }) {
   );
 }
 
+const DEMO_MODE = true;
+
+function getSortedDemoPosts() {
+  // Sort demoPosts so demo-... posts (your new ones) appear first, then by id descending
+  return [...demoPosts].sort((a, b) => {
+    // If both are demo posts, sort by timestamp in id
+    if (a.id.startsWith('demo-') && b.id.startsWith('demo-')) {
+      return parseInt(b.id.replace('demo-', '')) - parseInt(a.id.replace('demo-', ''));
+    }
+    // If only a is demo, a comes first
+    if (a.id.startsWith('demo-')) return -1;
+    // If only b is demo, b comes first
+    if (b.id.startsWith('demo-')) return 1;
+    // Otherwise, sort by numeric id descending
+    return parseInt(b.id) - parseInt(a.id);
+  });
+}
+
 export default function FeedScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [likeAnims, setLikeAnims] = useState(postsData.map(() => new Animated.Value(0)));
-  const [liked, setLiked] = useState(postsData.map(() => false));
-  const lastTaps = useRef<(number | null)[]>(postsData.map(() => null));
+  const [likeAnims, setLikeAnims] = useState<Animated.Value[]>([]);
+  const [liked, setLiked] = useState<boolean[]>([]);
+  const lastTaps = useRef<(number | null)[]>(demoPosts.map(() => null));
   const [commentModal, setCommentModal] = useState<{ visible: boolean; postIndex: number | null }>({ visible: false, postIndex: null });
   const [shareModal, setShareModal] = useState<{ visible: boolean; postIndex: number | null }>({ visible: false, postIndex: null });
   const [messageModal, setMessageModal] = useState(false);
@@ -199,6 +274,8 @@ export default function FeedScreen() {
   const feedListRef = useRef<FlatList>(null);
   const navigation = useNavigation();
   const params = useLocalSearchParams();
+  const { profilePic } = useUser();
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
 
   const handleDoubleTap = (index: number) => {
     Animated.sequence([
@@ -253,6 +330,11 @@ export default function FeedScreen() {
 
   const handleDeletePost = (postId: string) => {
     setPosts(prev => prev.filter(p => p.id !== postId));
+    // Also remove from demoPosts
+    const idx = demoPosts.findIndex(p => p.id === postId);
+    if (idx !== -1) demoPosts.splice(idx, 1);
+    // Navigate to profile with refresh param
+    router.push({ pathname: '/profile', params: { refresh: Date.now().toString() } });
   };
 
   const renderItem = ({ item, index }: { item: Post; index: number }) => {
@@ -263,8 +345,10 @@ export default function FeedScreen() {
       }
       lastTaps.current[index] = now;
     };
+    const avatarUri = item.user === 'you' ? profilePic : item.avatar;
+    const isHighlighted = item.id === highlightedPostId;
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, isHighlighted && { backgroundColor: '#ffe066' }]}>
         {/* Show delete button for user's own posts */}
         {item.user === 'you' && (
           <TouchableOpacity
@@ -280,7 +364,7 @@ export default function FeedScreen() {
           </TouchableOpacity>
         )}
         <View style={styles.cardHeader}>
-          <PostImage uri={item.avatar} style={styles.avatar} />
+          <PostImage uri={avatarUri} style={styles.avatar} />
           <Text style={styles.user}>{item.user}</Text>
         </View>
         {/* Only render image if present */}
@@ -325,6 +409,12 @@ export default function FeedScreen() {
     { id: 'chat1', name: 'Alice', last: 'Hey there!' },
     { id: 'chat2', name: 'Bob', last: "Let's catch up." },
     { id: 'group1', name: 'Crypto Group', last: 'New event soon!' },
+    { id: 'chat3', name: 'Mia', last: 'Did you see the NFT drop?' },
+    { id: 'chat4', name: 'Nina', last: 'Ready for the hackathon?' },
+    { id: 'chat5', name: 'Oliver', last: 'Staking is live!' },
+    { id: 'group2', name: 'Solana Artists', last: 'Art contest results posted.' },
+    { id: 'chat6', name: 'Paula', last: 'Coffee later?' },
+    { id: 'chat7', name: 'Quentin', last: 'Just joined Clovia!' },
   ];
 
   useEffect(() => {
@@ -338,11 +428,14 @@ export default function FeedScreen() {
   }, [navigation]);
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      setPosts(getSortedDemoPosts());
+    }
     const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const firestorePosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
       if (firestorePosts.length === 0) {
-        setPosts(postsData);
+        setPosts([...demoPosts]);
       } else {
         setPosts(firestorePosts);
       }
@@ -371,6 +464,28 @@ export default function FeedScreen() {
     }
   }, [params.newMeme]);
 
+  // Keep likeAnims and liked in sync with posts
+  useEffect(() => {
+    if (posts.length !== likeAnims.length) {
+      setLikeAnims(posts.map(() => new Animated.Value(0)));
+    }
+    if (posts.length !== liked.length) {
+      setLiked(posts.map(() => false));
+    }
+  }, [posts]);
+
+  // Scroll to post if postId param is present
+  useEffect(() => {
+    if (params.postId && posts.length > 0) {
+      const index = posts.findIndex(p => p.id === params.postId);
+      if (index !== -1 && feedListRef.current) {
+        feedListRef.current.scrollToIndex({ index, animated: true });
+        setHighlightedPostId(params.postId as string);
+        setTimeout(() => setHighlightedPostId(null), 1200); // Remove highlight after 1.2s
+      }
+    }
+  }, [params.postId, posts]);
+
   const renderAppName = () => (
     <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 2 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -389,7 +504,7 @@ export default function FeedScreen() {
         </TouchableOpacity>
       </View>
       <FlatList
-        data={demoStories}
+        data={stories}
         keyExtractor={item => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -429,11 +544,17 @@ export default function FeedScreen() {
     </View>
   );
 
+  // Update demoStories to use profilePic for 'me'
+  const stories = [
+    { id: 'me', user: 'You', avatar: profilePic, image: '', isMe: true },
+    ...demoStories.slice(1),
+  ];
+
   return (
     <View style={styles.container}>
       <FlatList
         ref={feedListRef}
-        data={posts}
+        data={likeAnims.length === posts.length && liked.length === posts.length ? posts : []}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
@@ -477,7 +598,7 @@ export default function FeedScreen() {
         <Pressable style={styles.storyModalOverlay} onPress={() => setStoryModal({ visible: false, storyIndex: null })}>
           <View style={styles.storyModalContent}>
             {storyModal.storyIndex !== null && (
-              <Image source={{ uri: demoStories[storyModal.storyIndex].image }} style={styles.storyImage} />
+              <Image source={{ uri: stories[storyModal.storyIndex].image }} style={styles.storyImage} />
             )}
           </View>
         </Pressable>
