@@ -36,7 +36,7 @@ export default function WelcomeScreen() {
 
   const handleSkip = () => {
     // login();
-    router.replace('/feed');
+    router.replace('(tabs)/feed');
   };
 
   return (
@@ -81,7 +81,7 @@ export default function WelcomeScreen() {
           <PremiumText style={styles.slideText}>
             Connect your wallet to unlock the full Clovia experience.
           </PremiumText>
-          <TouchableOpacity style={styles.walletBtn} onPress={() => { /* login(); */ router.replace('/feed'); }}>
+          <TouchableOpacity style={styles.walletBtn} onPress={() => { /* login(); */ router.replace('/onboarding'); }}>
             <Ionicons name="wallet-outline" size={22} color={Colors.dark.background} style={{ marginRight: 10 }} />
             <PremiumText style={styles.walletBtnText}>Connect Wallet</PremiumText>
           </TouchableOpacity>
