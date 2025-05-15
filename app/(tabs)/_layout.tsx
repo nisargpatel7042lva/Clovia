@@ -1,9 +1,24 @@
 import { HapticTab } from '@/components/HapticTab';
-import TabBarBackground from '@/components/ui/TabBarBackground';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+
+function GlassTabBarBackground() {
+  return (
+    <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill}>
+      <LinearGradient
+        colors={["#a4508b", "#5f0a87", "#aba0f1"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[StyleSheet.absoluteFill, { opacity: 0.85, borderRadius: 32 }]}
+      />
+    </BlurView>
+  );
+}
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -12,10 +27,10 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#fff',
-        tabBarInactiveTintColor: '#23243a',
+        tabBarInactiveTintColor: '#d1b3ff',
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
+        tabBarBackground: GlassTabBarBackground,
         tabBarStyle: [
           {
             position: 'absolute',
@@ -23,17 +38,18 @@ export default function TabLayout() {
             right: 16,
             bottom: 24,
             borderRadius: 32,
-            backgroundColor: '#aba0f1',
+            backgroundColor: 'transparent',
             borderWidth: 0.5,
             borderColor: 'rgba(255,255,255,0.08)',
-            shadowColor: '#000',
-            shadowOpacity: 0.15,
-            shadowRadius: 16,
+            shadowColor: '#a4508b',
+            shadowOpacity: 0.25,
+            shadowRadius: 24,
             shadowOffset: { width: 0, height: 8 },
-            elevation: 10,
+            elevation: 20,
             height: 70,
             paddingBottom: 10,
             paddingTop: 10,
+            overflow: 'hidden',
           },
         ],
       }}>
@@ -51,7 +67,7 @@ export default function TabLayout() {
         options={{
           title: 'Post',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'add-circle' : 'add-circle-outline'} size={32} color={color} />
+            <Ionicons name={focused ? 'add-circle' : 'add-circle-outline'} size={30} color={color} />
           ),
         }}
       />
