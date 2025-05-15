@@ -266,7 +266,7 @@ export default function FeedScreen() {
   const [messageModal, setMessageModal] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [selectedShare, setSelectedShare] = useState<string[]>([]);
-  const [storyModal, setStoryModal] = useState<{ visible: boolean; storyIndex: number | null }>({ visible: false, storyIndex: null });
+  const [storyModal, setStoryModal] = useState<{ visible: boolean; storyIndex: number | null; comment: string; liked: boolean }>({ visible: false, storyIndex: null, comment: '', liked: false });
   const [storyPostModal, setStoryPostModal] = useState(false);
   const [storyImage, setStoryImage] = useState<string | null>(null);
   const [storyCaption, setStoryCaption] = useState('');
@@ -527,7 +527,7 @@ export default function FeedScreen() {
               <Text style={styles.storyUser}>Your Story</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.storyItem} onPress={() => setStoryModal({ visible: true, storyIndex: index })}>
+            <TouchableOpacity style={styles.storyItem} onPress={() => setStoryModal({ visible: true, storyIndex: index, comment: '', liked: false })}>
               <LinearGradient
                 colors={["#aba0f1", "#a4508b", "#5f0a87"]}
                 start={{ x: 0, y: 0 }}
@@ -594,12 +594,37 @@ export default function FeedScreen() {
         </Pressable>
       </Modal>
       {/* Story Modal */}
-      <Modal visible={storyModal.visible} transparent animationType="fade" onRequestClose={() => setStoryModal({ visible: false, storyIndex: null })}>
-        <Pressable style={styles.storyModalOverlay} onPress={() => setStoryModal({ visible: false, storyIndex: null })}>
-          <View style={styles.storyModalContent}>
+      <Modal visible={storyModal.visible} transparent animationType="fade" onRequestClose={() => setStoryModal({ visible: false, storyIndex: null, comment: '', liked: false })}>
+        <Pressable style={[styles.storyModalOverlay, { padding: 0 }]} onPress={() => setStoryModal({ visible: false, storyIndex: null, comment: '', liked: false })}>
+          <View style={[styles.storyModalContent, { width: '100%', height: '100%', borderRadius: 0, justifyContent: 'flex-start', alignItems: 'stretch', backgroundColor: '#18192b' }]}> 
             {storyModal.storyIndex !== null && (
-              <Image source={{ uri: stories[storyModal.storyIndex].image }} style={styles.storyImage} />
+              <Image source={{ uri: stories[storyModal.storyIndex].image }} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, borderRadius: 0, resizeMode: 'cover' }} />
             )}
+            {/* Heart icon and comment input at the very bottom */}
+            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', paddingHorizontal: 16, paddingBottom: 24 }}>
+              <TouchableOpacity
+                onPress={e => {
+                  e.stopPropagation && e.stopPropagation();
+                  setStoryModal(sm => ({ ...sm, liked: !sm.liked }));
+                }}
+                style={{ alignSelf: 'flex-end', marginRight: 10, marginBottom: 12, backgroundColor: '#23243acc', borderRadius: 24, padding: 10 }}
+              >
+                <Ionicons name={storyModal.liked ? 'heart' : 'heart-outline'} size={38} color={storyModal.liked ? '#ff3b5c' : '#fff'} />
+              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#23243acc', borderRadius: 18, paddingHorizontal: 12, paddingVertical: 6, width: '100%' }}>
+                <TextInput
+                  style={{ flex: 1, color: '#fff', fontSize: 16, paddingVertical: 6 }}
+                  placeholder="Add a comment..."
+                  placeholderTextColor="#aaa"
+                  value={storyModal.comment || ''}
+                  onChangeText={text => setStoryModal(sm => ({ ...sm, comment: text }))}
+                  onPressIn={e => e.stopPropagation && e.stopPropagation()}
+                />
+                <TouchableOpacity onPress={() => setStoryModal(sm => ({ ...sm, comment: '' }))} style={{ marginLeft: 8 }}>
+                  <Ionicons name="send" size={22} color="#aba0f1" />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </Pressable>
       </Modal>
