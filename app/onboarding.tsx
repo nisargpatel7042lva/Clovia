@@ -78,6 +78,7 @@ export default function OnboardingScreen() {
       router.replace('/feed');
     } catch (e) {
       setLoading(false);
+      console.log('Profile save error:', e);
       Alert.alert('Failed to save profile', e instanceof Error ? e.message : String(e));
     }
   };

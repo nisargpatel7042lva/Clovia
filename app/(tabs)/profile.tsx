@@ -22,6 +22,8 @@ const posts = [
   { id: '3', image: 'https://source.unsplash.com/random/400x304' },
 ];
 
+const WALLET_ADDRESS = 'JLoZ8cWwv6hPYR1dshN61scNHwF9DAA257YtVjZfB3E';
+
 export default function ProfileScreen() {
   const stakedAmount = '3.7 SOL';
   const router = useRouter();
@@ -84,6 +86,10 @@ export default function ProfileScreen() {
                   <Text style={styles.statLabel}>Following</Text>
                 </View>
               </View>
+            </View>
+            <View style={styles.walletCard}>
+              <PremiumText style={styles.walletLabel}>Wallet Address</PremiumText>
+              <PremiumText style={styles.walletId}>{WALLET_ADDRESS}</PremiumText>
             </View>
             <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>Posts</Text>
           </>
@@ -332,5 +338,27 @@ const styles = StyleSheet.create({
   gridText: {
     color: Colors.dark.text,
     fontSize: 14,
+  },
+  walletCard: {
+    backgroundColor: '#23243a',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 18,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  walletLabel: {
+    color: Colors.dark.icon,
+    fontSize: 15,
+    marginBottom: 6,
+  },
+  walletId: {
+    color: Colors.dark.tint,
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 }); 
