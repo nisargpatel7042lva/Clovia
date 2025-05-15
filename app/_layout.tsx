@@ -3,13 +3,13 @@ import { AVPlaybackStatus, ResizeMode, Video } from 'expo-av';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Text as RNText, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { AuthProvider, useAuth } from '../context/AuthContext';
+import { AuthProvider } from '../context/AuthContext';
 import { UserProvider } from '../context/UserContext';
 
 // Create a PremiumText component for global use
@@ -33,47 +33,44 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'), // for legacy
   });
   const [showSplash, setShowSplash] = useState(true);
-  const { isLoggedIn } = useAuth();
-
-  useEffect(() => {
-    if (loaded) {
-      setShowSplash(true);
-    }
-  }, [loaded]);
 
   if (!loaded) {
     return null;
   }
 
-  if (showSplash) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#18192b' }}>
-        <Video
-          source={require('../assets/videos/Clovia.mp4')}
-          style={StyleSheet.absoluteFillObject}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay
-          onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
-            if (status.isLoaded && status.didJustFinish) setShowSplash(false);
-          }}
-        />
-      </GestureHandlerRootView>
-    );
-  }
-
-  // Only render the app after splash is done!
   return (
     <UserProvider>
       <AuthProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack initialRouteName={isLoggedIn ? '(tabs)' : 'welcome'}>
+            <Stack initialRouteName="welcome">
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="welcome" options={{ headerShown: false }} />
               <Stack.Screen name="onboarding" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" options={{ headerShown: false }} />
             </Stack>
             <StatusBar style="auto" />
+            {showSplash && (
+              <GestureHandlerRootView
+                style={[
+                  StyleSheet.absoluteFill,
+                  { backgroundColor: '#18192b', zIndex: 9999, justifyContent: 'center', alignItems: 'center' },
+                ]}
+                pointerEvents="box-none"
+              >
+                <Video
+                  source={require('../assets/videos/Clovia.mp4')}
+                  style={StyleSheet.absoluteFillObject}
+                  resizeMode={ResizeMode.COVER}
+                  shouldPlay
+                  onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
+                    if (status.isLoaded && status.didJustFinish) {
+                      setShowSplash(false);
+                    }
+                  }}
+                />
+              </GestureHandlerRootView>
+            )}
           </ThemeProvider>
         </GestureHandlerRootView>
       </AuthProvider>
