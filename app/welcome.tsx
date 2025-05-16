@@ -6,6 +6,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, w
 import Swiper from 'react-native-swiper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../context/AuthContext';
+import { useWallet } from '../context/WalletContext';
+import { connectPhantomWallet } from '../lib/phantom';
 import { PremiumText } from './_layout';
 
 const { width } = Dimensions.get('window');
@@ -17,6 +19,14 @@ export const options = {
 export default function WelcomeScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { walletAddress, setWalletAddress } = useWallet();
+  const [connecting, setConnecting] = React.useState(false);
+
+  React.useEffect(() => {
+    if (walletAddress) {
+      router.replace('/feed');
+    }
+  }, [walletAddress]);
 
   // Animation for arrow
   const arrowTranslate = useSharedValue(0);
@@ -34,9 +44,17 @@ export default function WelcomeScreen() {
     transform: [{ translateX: arrowTranslate.value }],
   }));
 
+  const handleConnectWallet = async () => {
+    setConnecting(true);
+    await connectPhantomWallet((publicKey) => {
+      setWalletAddress(publicKey);
+      setConnecting(false);
+    });
+  };
+
   const handleSkip = () => {
     // login();
-    router.replace('(tabs)/feed');
+    router.replace('/feed');
   };
 
   return (
@@ -81,9 +99,9 @@ export default function WelcomeScreen() {
           <PremiumText style={styles.slideText}>
             Connect your wallet to unlock the full Clovia experience.
           </PremiumText>
-          <TouchableOpacity style={styles.walletBtn} onPress={() => { /* login(); */ router.replace('/onboarding'); }}>
+          <TouchableOpacity style={styles.walletBtn} onPress={handleConnectWallet} disabled={connecting}>
             <Ionicons name="wallet-outline" size={22} color={Colors.dark.background} style={{ marginRight: 10 }} />
-            <PremiumText style={styles.walletBtnText}>Connect Wallet</PremiumText>
+            <PremiumText style={styles.walletBtnText}>{connecting ? 'Connecting...' : (walletAddress ? `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Connect Wallet')}</PremiumText>
           </TouchableOpacity>
         </View>
       </Swiper>

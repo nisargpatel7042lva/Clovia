@@ -10,7 +10,9 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider } from '../context/AuthContext';
+import { StakingProvider } from '../context/StakingContext';
 import { UserProvider } from '../context/UserContext';
+import { WalletProvider } from '../context/WalletContext';
 
 // Create a PremiumText component for global use
 export function PremiumText(props: React.ComponentProps<typeof RNText>) {
@@ -39,41 +41,45 @@ export default function RootLayout() {
   }
 
   return (
-    <UserProvider>
-      <AuthProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack initialRouteName="welcome">
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="welcome" options={{ headerShown: false }} />
-              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" options={{ headerShown: false }} />
-            </Stack>
-            <StatusBar style="auto" />
-            {showSplash && (
-              <GestureHandlerRootView
-                style={[
-                  StyleSheet.absoluteFill,
-                  { backgroundColor: '#18192b', zIndex: 9999, justifyContent: 'center', alignItems: 'center' },
-                ]}
-                pointerEvents="box-none"
-              >
-                <Video
-                  source={require('../assets/videos/Clovia.mp4')}
-                  style={StyleSheet.absoluteFillObject}
-                  resizeMode={ResizeMode.COVER}
-                  shouldPlay
-                  onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
-                    if (status.isLoaded && status.didJustFinish) {
-                      setShowSplash(false);
-                    }
-                  }}
-                />
-              </GestureHandlerRootView>
-            )}
-          </ThemeProvider>
-        </GestureHandlerRootView>
-      </AuthProvider>
-    </UserProvider>
+    <WalletProvider>
+      <StakingProvider>
+        <UserProvider>
+          <AuthProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack initialRouteName="welcome">
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="welcome" options={{ headerShown: false }} />
+                  <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                  <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+                </Stack>
+                <StatusBar style="auto" />
+                {showSplash && (
+                  <GestureHandlerRootView
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { backgroundColor: '#18192b', zIndex: 9999, justifyContent: 'center', alignItems: 'center' },
+                    ]}
+                    pointerEvents="box-none"
+                  >
+                    <Video
+                      source={require('../assets/videos/Clovia.mp4')}
+                      style={StyleSheet.absoluteFillObject}
+                      resizeMode={ResizeMode.COVER}
+                      shouldPlay
+                      onPlaybackStatusUpdate={(status: AVPlaybackStatus) => {
+                        if (status.isLoaded && status.didJustFinish) {
+                          setShowSplash(false);
+                        }
+                      }}
+                    />
+                  </GestureHandlerRootView>
+                )}
+              </ThemeProvider>
+            </GestureHandlerRootView>
+          </AuthProvider>
+        </UserProvider>
+      </StakingProvider>
+    </WalletProvider>
   );
 }

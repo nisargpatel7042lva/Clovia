@@ -4,18 +4,20 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
-const WALLET_ID = '7f8a...b3c2';
+import { useWallet } from '../context/WalletContext';
 
 export default function WalletDetailsScreen() {
   const router = useRouter();
+  const { walletAddress } = useWallet();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await Clipboard.setStringAsync(WALLET_ID);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-    Alert.alert('Copied!', 'Wallet ID copied to clipboard.');
+    if (walletAddress) {
+      await Clipboard.setStringAsync(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      Alert.alert('Copied!', 'Wallet address copied to clipboard.');
+    }
   };
 
   return (
@@ -24,13 +26,17 @@ export default function WalletDetailsScreen() {
         <Text style={styles.headerTitle}>Wallet Details</Text>
       </View>
       <View style={styles.walletCard}>
-        <Text style={styles.walletLabel}>Wallet ID</Text>
-        <View style={styles.walletRow}>
-          <Text style={styles.walletId}>{WALLET_ID}</Text>
-          <TouchableOpacity onPress={handleCopy} style={styles.copyBtn}>
-            <Ionicons name={copied ? 'checkmark-done' : 'copy-outline'} size={22} color={Colors.dark.tint} />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.walletLabel}>Wallet Address</Text>
+        {!walletAddress ? (
+          <Text style={{ color: '#a4508b', fontSize: 16, textAlign: 'center' }}>Connect your wallet to see details.</Text>
+        ) : (
+          <View style={styles.walletRow}>
+            <Text style={styles.walletId}>{walletAddress}</Text>
+            <TouchableOpacity onPress={handleCopy} style={styles.copyBtn}>
+              <Ionicons name={copied ? 'checkmark-done' : 'copy-outline'} size={22} color={Colors.dark.tint} />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </View>
   );

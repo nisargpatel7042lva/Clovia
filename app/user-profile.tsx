@@ -1,7 +1,12 @@
 import { Colors } from '@/constants/Colors';
+import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useStaking } from '../context/StakingContext';
+import { useWallet } from '../context/WalletContext';
+import { buildStakeTransaction, connectPhantomWallet, openPhantomSignAndSend } from '../lib/phantom';
 
 // Demo posts per user
 const demoUserPosts: Record<string, { id: string; image: string }[]> = {
@@ -40,18 +45,65 @@ export default function UserProfileScreen() {
   const [showUnfollow, setShowUnfollow] = useState(false);
   const [unfollowMsg, setUnfollowMsg] = useState(false);
   const router = useRouter();
+  const { walletAddress, setWalletAddress } = useWallet();
+  const [connecting, setConnecting] = useState(false);
+  const { addStake } = useStaking();
+  const [staking, setStaking] = useState(false);
 
   // Demo stats
   const followers = 123 + (username ? (username as string).length * 7 : 0);
   const following = 42 + (username ? (username as string).length * 2 : 0);
   const posts = demoUserPosts[username as string] || [];
 
-  const handleConfirmStake = () => {
-    setStakeModal(false);
-    setStakeAmount('');
-    setIsFollowing(true);
-    setShowCongrats(true);
-    setTimeout(() => setShowCongrats(false), 2500);
+  const handleConfirmStake = async () => {
+    if (!walletAddress) return;
+    setStaking(true);
+    try {
+      const toPubkey = 'Fg6PaFpoGXkYsidMpWxTWqkFqjzvTgkZp6tga5cFhJkX'; // Replace with your staking program address
+      const amount = parseFloat(stakeAmount);
+      if (isNaN(amount) || amount <= 0) throw new Error('Invalid amount');
+      // Build and serialize the transaction
+      const serializedTx = await buildStakeTransaction({
+        from: walletAddress,
+        to: toPubkey,
+        amountSol: amount,
+      });
+      // Open Phantom to sign and send
+      await openPhantomSignAndSend({
+        transaction: serializedTx,
+        onComplete: (signature) => {
+          if (signature) {
+            addStake({ username: username as string, amount });
+            setStakeModal(false);
+            setStakeAmount('');
+            setIsFollowing(true);
+            setShowCongrats(true);
+            setTimeout(() => setShowCongrats(false), 2500);
+          } else {
+            Alert.alert('Staking Failed', 'Transaction was not signed.');
+          }
+          setStaking(false);
+        },
+      });
+    } catch (e: any) {
+      Alert.alert('Staking Failed', e.message || 'Error');
+      setStaking(false);
+    }
+  };
+
+  const handleCopyAddress = () => {
+    if (walletAddress) {
+      Clipboard.setStringAsync(walletAddress);
+      Alert.alert('Copied', 'Wallet address copied to clipboard!');
+    }
+  };
+
+  const handleConnectWallet = async () => {
+    setConnecting(true);
+    await connectPhantomWallet((publicKey) => {
+      setWalletAddress(publicKey);
+      setConnecting(false);
+    });
   };
 
   return (
@@ -59,6 +111,37 @@ export default function UserProfileScreen() {
       <Image source={{ uri: avatar as string }} style={styles.avatar} />
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.username}>@{username}</Text>
+      {!walletAddress ? (
+        <TouchableOpacity
+          style={{
+            backgroundColor: Colors.dark.tint,
+            borderRadius: 12,
+            paddingVertical: 12,
+            paddingHorizontal: 32,
+            marginTop: 18,
+            marginBottom: 8,
+            alignItems: 'center',
+            opacity: connecting ? 0.7 : 1,
+            borderWidth: 2,
+            borderColor: '#a4508b',
+          }}
+          onPress={handleConnectWallet}
+          disabled={connecting}
+        >
+          <Text style={{ color: Colors.dark.background, fontWeight: 'bold', fontSize: 16 }}>
+            {connecting ? 'Connecting...' : 'Connect Wallet'}
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 18, marginBottom: 8 }}>
+          <Text style={{ color: '#a4508b', fontWeight: 'bold', fontSize: 15 }}>
+            {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+          </Text>
+          <TouchableOpacity onPress={handleCopyAddress} style={{ marginLeft: 10 }}>
+            <Ionicons name="copy-outline" size={20} color="#a4508b" />
+          </TouchableOpacity>
+        </View>
+      )}
       <View style={styles.statsRow}>
         <View style={styles.statBox}>
           <Text style={styles.statNumber}>{posts.length}</Text>
@@ -158,10 +241,11 @@ export default function UserProfileScreen() {
                 value={stakeAmount}
                 onChangeText={setStakeAmount}
                 keyboardType="numeric"
+                editable={!staking}
               />
             </View>
-            <TouchableOpacity style={styles.modalBtn} onPress={handleConfirmStake}>
-              <Text style={styles.modalBtnText}>Confirm</Text>
+            <TouchableOpacity style={styles.modalBtn} onPress={handleConfirmStake} disabled={staking}>
+              <Text style={styles.modalBtnText}>{staking ? 'Staking...' : 'Confirm'}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
