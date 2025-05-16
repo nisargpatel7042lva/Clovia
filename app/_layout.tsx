@@ -1,7 +1,3 @@
-import 'react-native-get-random-values';
-import 'react-native-url-polyfill/auto';
-
-
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { AVPlaybackStatus, ResizeMode, Video } from 'expo-av';
 import { useFonts } from 'expo-font';
