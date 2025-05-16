@@ -3,7 +3,7 @@ import { db } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React from 'react';
-import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function MessagesScreen() {
